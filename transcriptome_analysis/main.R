@@ -1,7 +1,8 @@
 # Transcriptomics Analysis ----
 ## Overview ----
 # This script includes the transcritpome analysis of Hepatocytes (HC) as well as
-# Kupffer-Cells (KC). Including DE, ORA, Ligand-Receptor and Co-expression analysis.
+# Kupffer-Cells (KC) - both Hif1a ko.
+# Including DE, ORA, Ligand-Receptor and Co-expression analysis.
 
 ## Input ----
 # (all in data Folder):
@@ -15,6 +16,7 @@
 ## Output----
 # (output to script's folder):
 #   - DE-results object (KF & HC) - displayed in table-format in provided html file
+#   - PCA plots
 #   - Over-representation (ORA) plots for desired contrasts
 #   - ORA-result objects
 #   - Ligand-Receptor plot
@@ -25,7 +27,11 @@
 
 ## KC ----
 
+### PCA ----
+
 ## HC ----
+
+### PCA ----
 
 # ORA- Analysis ----
 
