@@ -1,0 +1,578 @@
+---
+title: "Database - Maternal Obesity"
+author: "Lea Seep"
+date: "2023-03-31"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    toc_depth: 5
+---
+
+```{r Load data, message=FALSE, warning=FALSE, include=FALSE}
+library(DT)
+library(SummarizedExperiment)
+
+# Read in all necassary data to display
+Transcriptome <- readRDS("transcriptome_analysis/Transcriptomics_results.rds")
+Transcriptome_CoCena_KC <- readRDS("transcriptome_analysis/Transcriptomics_ORA_CoCena_results_KC.rds")
+Transcriptome_CoCena_HC <- readRDS("transcriptome_analysis/Transcriptomics_ORA_CoCena_results_HC.rds")
+
+Metabolome <- readRDS("metabolome_analysis/Metabolomics_results.rds")
+lipidome <- readRDS("lipidome_analysis/Lipidomic_stats_result.rds")
+
+# Read in original Objects for transcriptome for addtional Information
+DESeq_Obj_KC_ko <- readRDS("data/DESeq_Obj_KC.rds")
+DESeq_Obj_HC_ko <- readRDS("data/DESeq_Obj_HC.rds")
+rownames(DESeq_Obj_KC_ko) <- gsub("\\..*","",rownames(DESeq_Obj_KC_ko))
+rownames(DESeq_Obj_HC_ko) <- gsub("\\..*","",rownames(DESeq_Obj_HC_ko))
+
+```
+
+## Overview
+This document was created to facilitate an easy look up of the actual data used
+within the publication. All presented tables can be filtered, searched, sorted
+and downloaded in your desired output format.
+We hope that this opens the door for easy data reuse!
+  
+## How to use
+This is a html file and can be open within a browser. 
+You can see on the top left the entire content of the document. If clicking
+on a top potential subcategories will drop out and you can also click on one
+of those to navigate to the section of interest.
+The tables display most often entitie-wise information, always annotated with
+all available information as well. Note that those columns are attached by default 
+to the right of respective table, so you might have to scroll to see those information.
+You can use drag and drop to reorder the columns (Drag the column header!).
+
+Each column can be searched by typing into the box just underneath each column
+header. If numerical values are present you can specify to see everything below
+or above a certain threshold. If you click now on your desired table format to
+download that certain selection will be downloaded.
+
+If you want to download the entire table you need to check if nothing is selected (default).
+
+# Results {.tabset}
+## Transcriptomics 
+### DE KC Hif1a
+Results of DE-Analysis, cut down to the top 1000 genes (sorted by unadj. p-value).
+```{r DE KC Hif1a, echo=FALSE}
+Transcriptome$dds_KC$GeneID <- rownames(Transcriptome$dds_KC)
+rownames(Transcriptome$dds_KC) <- Transcriptome$dds_KC$GeneID
+Transcriptome$dds_KC$GeneID <- NULL
+res <- as.data.frame(Transcriptome$dds_KC)
+
+add_data <- rowData(DESeq_Obj_KC_ko)
+
+data2show <- cbind(
+  res,
+  add_data[rownames(res),c("SYMBOL","GENETYPE")]
+  )
+
+data2show <- data2show[order(data2show$pvalue)[1:1000],]
+
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+#### ORA results
+```{r echo=FALSE}
+UP <- Transcriptome$ORA_KC$UP
+DOWN <- Transcriptome$ORA_KC$UP
+```
+
+##### KEGG
+###### UP
+```{r echo=FALSE}
+data2show <- as.data.frame(UP$KEGG)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+###### DOWN
+
+```{r echo=FALSE}
+data2show <- as.data.frame(DOWN$KEGG)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+##### GO
+###### Up
+```{r echo=FALSE}
+data2show <- as.data.frame(UP$KEGG)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+###### Down
+```{r echo=FALSE}
+data2show <- as.data.frame(DOWN$KEGG)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+##### HALLMARK
+###### UP
+```{r echo=FALSE}
+data2show <- as.data.frame(UP$HALLMARK)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+###### DOWN
+```{r echo=FALSE}
+data2show <- as.data.frame(DOWN$HALLMARK)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+
+### DE HC Hif1a
+```{r DE HC Hif1a, echo=FALSE}
+Transcriptome$dds_HC$GeneID <- rownames(Transcriptome$dds_HC)
+rownames(Transcriptome$dds_HC) <- Transcriptome$dds_HC$GeneID
+Transcriptome$dds_HC$GeneID <- NULL
+res <- as.data.frame(Transcriptome$dds_HC,make.names=T)
+
+add_data <- rowData(DESeq_Obj_HC_ko)
+
+data2show <- cbind(
+  res,
+  add_data[rownames(res),c("SYMBOL","GENETYPE")]
+  )
+
+data2show <- data2show[order(data2show$pvalue)[1:1000],]
+
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+
+#### ORA results
+```{r echo=FALSE}
+UP <- Transcriptome$ORA_HC$UP
+DOWN <- Transcriptome$ORA_HC$UP
+```
+##### KEGG
+###### UP
+```{r echo=FALSE}
+data2show <- as.data.frame(UP$KEGG)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+###### DOWN
+
+```{r echo=FALSE}
+data2show <- as.data.frame(DOWN$KEGG)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+##### GO
+###### Up
+```{r echo=FALSE}
+data2show <- as.data.frame(UP$KEGG)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+###### Down
+```{r echo=FALSE}
+data2show <- as.data.frame(DOWN$KEGG)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+##### HALLMARK
+###### UP
+```{r echo=FALSE}
+data2show <- as.data.frame(UP$HALLMARK)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+###### DOWN
+```{r echo=FALSE}
+data2show <- as.data.frame(DOWN$HALLMARK)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+
+
+### hCoCena
+#### KC wt
+Cluster Sets & ORA
+
+#### KC Hif1a
+Cluster Sets & ORA
+
+```{r echo=FALSE,results='asis'}
+counter = 0
+
+#htmltools::tagList(datatable(matrix()))
+for(i in names(Transcriptome_CoCena_KC)){
+  for(j in names(Transcriptome_CoCena_KC[[i]])){
+    counter = counter + 1
+      data2show <- Transcriptome_CoCena_KC[[i]][[j]]
+      
+      customCaption = paste0("Table ",counter,": Cluster: ",i," ",j," enrichment results")
+      
+      print(htmltools::tagList(
+        DT::datatable(
+          data2show,
+           caption = customCaption,
+          extensions = c('Buttons','ColReorder'),
+          filter = 'top',
+          options = list(
+            pageLength = 5,
+            paging = TRUE,
+            searching = TRUE,
+            fixedColumns = TRUE,
+            colReorder = TRUE,
+            autoWidth = TRUE,
+            ordering = TRUE,
+            dom = 'Bfrtip',
+            buttons = c('copy', 'csv', 'excel')
+        ),
+        class = "display"
+      ))
+      )
+  }
+}
+
+```
+
+#### HC Hif1a
+Cluster Sets & ORA
+```{r echo=FALSE,results='asis'}
+counter = 0
+#htmltools::tagList(datatable(matrix()))
+for(i in names(Transcriptome_CoCena_HC)){
+  for(j in names(Transcriptome_CoCena_HC[[i]])){
+    counter = counter + 1
+      data2show <- Transcriptome_CoCena_HC[[i]][[j]]
+      
+      customCaption = paste0("Table ",counter,": Cluster: ",i," ",j," enrichment results")
+      
+      print(htmltools::tagList(
+        DT::datatable(
+          data2show,
+           caption = customCaption,
+          extensions = c('Buttons','ColReorder'),
+          filter = 'top',
+          options = list(
+            pageLength = 5,
+            paging = TRUE,
+            searching = TRUE,
+            fixedColumns = TRUE,
+            colReorder = TRUE,
+            autoWidth = TRUE,
+            ordering = TRUE,
+            dom = 'Bfrtip',
+            buttons = c('copy', 'csv', 'excel')
+        ),
+        class = "display"
+      ))
+      )
+  }
+}
+
+```
+
+
+## Metabolomics
+### ANOVA results ko HFD CD CD vs wt HFD CD CD
+
+```{r echo=FALSE}
+data2show <- Metabolome$ANOVA_HFDCDCD_vs_CDCDCD
+data2show <- data2show[,!grepl("^FS",colnames(data2show))]
+data2show <- as.data.frame(data2show)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+
+
+### Metabridge Output
+
+## Lipidomics
+### wild type 
+#### LFC per class
+```{r echo=FALSE}
+data2show <- as.data.frame(lipidome$Lipidomics_wt$LFC_Values)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+#### p-Values  per class
+```{r echo=FALSE}
+data2show <- as.data.frame(lipidome$Lipidomics_wt$stat_res_pVal)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+### knock out
+#### LFC per class
+```{r echo=FALSE}
+data2show <- as.data.frame(lipidome$Lipidomics_ko$LFC_Values)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+#### p-Values  per class
+```{r echo=FALSE}
+data2show <- as.data.frame(lipidome$Lipidomics_ko$stat_res_pVal)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
