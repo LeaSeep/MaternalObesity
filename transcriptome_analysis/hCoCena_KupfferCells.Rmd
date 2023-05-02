@@ -42,11 +42,15 @@ init_object()
 PATH_CoCena_results="hCoCena"
 
 
-CoCena_Input_HC <- readRDS("../data/CoCena_Input_KC.rds")
-vst_data <- vst(CoCena_Input_HC, blind=FALSE)
+CoCena_Input_KC <- readRDS("../data/CoCena_Input_KC.rds")
 
-data_seq <- as.data.frame(assay(vst_data))
-annotation_seq <- as.data.frame(colData(vst_data))
+vst_data <- counts(CoCena_Input_KC, normalized=TRUE)
+#vst_data <- DESeq2::vst(CoCena_Input_KC, blind = F)
+
+#data_seq <- as.data.frame(assay(vst_data))
+data_seq <- as.data.frame(vst_data)
+
+annotation_seq <- as.data.frame(colData(CoCena_Input_KC))
 
 
 init_wd(dir_count_data = F,
@@ -86,9 +90,9 @@ define_layers(list( RNA_Seq = c("data_seq", "annotation_seq")))
 set_global_settings(organism = "mouse", 
     								control_keyword = "none", #vs wt_cd_cd_cd
     								variable_of_interest = "Merged", 
-    								min_nodes_number_for_network = 25, 
-    								min_nodes_number_for_cluster = 25,
-    								range_GFC = 4.0,
+    								min_nodes_number_for_network = 50, 
+    								min_nodes_number_for_cluster = 50,
+    								range_GFC = 2.5,
     								layout_algorithm = "layout_with_fr",
     								data_in_log = F)
 
@@ -121,8 +125,8 @@ hcocena::suggest_topvar()
 
 ```{r layer-specific settings}
 
-set_layer_settings(top_var = 6683,
-                   min_corr = rep(0.7, length(hcobject[["layers"]])), 
+set_layer_settings(top_var = 5000,
+                   min_corr = rep(0.6, length(hcobject[["layers"]])), 
                    range_cutoff_length = rep(100, length(hcobject[["layers"]])),
                    print_distribution_plots = rep(F, length(hcobject[["layers"]])))
 
@@ -157,13 +161,15 @@ plot_cutoffs(interactive = T)
   
   The order in which the cutoffs are subsequently defined must correspond to the order in which the layers have previously been specified.
   LS: Strategy used to choose threshold: 
-  1 - check No of DE-Genes  
-  2 - determine range of +-20% [891 - 593]
-  3 - within determined range select highest Rsquared ( here 0.531)
+  1 - check No of DE-Genes  (668)
+  2 - determine range of +-20% [802 - 534]
+  3 - within determined range select highest Rsquared ( here 0.888)
+  
+
   
 
 ```{r choose cutoff}
-set_cutoff(cutoff_vector = c(0.897))
+set_cutoff(cutoff_vector = c(0.7))
 
 ```
 
@@ -219,10 +225,13 @@ In this step, modules of strong co-expression will be detected in the network an
   NOTE 2: Instead of clustering your network here, you can alternatively import a clustering model. To do so, please use the import_clusters() function (see satellite markdown for infos).
   
 ```{r compute clusters and plot module heatmap}
-cluster_calculation(cluster_algo = "cluster_leiden",no_of_iterations = 1000)
+res=cluster_calculation(cluster_algo = "cluster_leiden",no_of_iterations = 100, max_cluster_count_per_gene = 3) # 1000
 #col_anno_categorical(variables = NULL, variable_label = NULL) 
-col_anno_categorical(variables = c("Maternal.diet"), variable_label = "Maternal.diet") 
-plot_cluster_heatmap()
+#col_anno_categorical(variables = c("Maternal.diet"), variable_label = "Maternal.diet") 
+complexHeatmap <- plot_cluster_heatmap(cluster_columns = F,
+                     col_order = levels(annotation_seq$Merged))
+
+complexHeatmap
 ```
 
 
@@ -247,18 +256,32 @@ plot_integrated_network()
 
   If you would like to evaluate how well each gene belongs to its asserted cluster, please refer to the satellite markdown, section "Cluster scores".
 ```{r}
-get_cluster_scores()
+# get_cluster_scores()
 ```
 
 
 ```{r GO profiling, fig.width = 10, fig.height = 7, message = F, warning = F}
 
-#Export CLusters
-clusterRes=hcocena::cluster_calculation(return_result = T)
-# take the clusters for profiling
+KEGGset <- msigdbr::msigdbr(
+  species = "Mus musculus",
+  category = "C2",
+  subcategory = "KEGG"
+)
+Hallmarkset <- msigdbr::msigdbr(
+  species ="Mus musculus",
+  category = "H",
+)
+
+res <- as.data.frame(res)
 clusterGenes <- list()
-for(i in clusterRes$color){
-  clusterGenes[[i]] <- strsplit(clusterRes[clusterRes$color==i,"gene_n"],split=",")[[1]]
+
+
+for(i in unique(res$color)){
+  if(i == "white"){
+    next
+  }
+  clusterGenes[[i]] <- strsplit(res[res$color==i,"gene_n"],split=",")[[1]]
+  
 }
 
 
@@ -270,14 +293,26 @@ for(i in clusterRes$color){
 ```{r}
 source("../utils/doORA.R")
 
-universe_entrez <- bitr(rownames(data_seq),
+library(msigdbr)
+library(clusterProfiler)
+
+union_all_genes_in_network <- rownames(hcobject$integrated_output$GFC_all_layers)
+
+input_genes <- rownames(hcobject$layer_specific_outputs$set1$part2$GFC_all_genes)# 5000 gene universe
+
+
+universe_entrez <- clusterProfiler::bitr(input_genes, 
                         fromType="ENSEMBL",
                         toType="ENTREZID",
                         OrgDb="org.Mm.eg.db")$ENTREZID
 
+
 ORA_cluster_results <- list()
 setwd("hCoCena/results_KC/")
-for(i in clusterRes$color){
+for(i in unique(res$color)){ 
+  if(i == "white"){
+    next
+  }
   fileName = paste0("KC_",i)
   ORA_cluster_results[[i]] <- doOra(
     clusterGenes[[i]], # ENSEBML

@@ -1,7 +1,7 @@
 ---
-  title: "hCoCena main markdown"
+  title: "hCoCena main KC wt"
 author: "Lea Seep"
-date: "17 3 2023"
+date: "04 03 2023"
 output:
   html_document: default
 pdf_document: default
@@ -15,6 +15,7 @@ This Markdown contains the base workflow of hcocena. For a fully functional anal
 ## load hCoCena package
 ```{r}
 library(hcocena)
+library(SummarizedExperiment)
 ```
 
 
@@ -39,16 +40,17 @@ init_object()
 ```{r}
 
 #PATH_TO_REFERENCE_FILES_FOLDER="hCoCena/refFiles/"
-PATH_CoCena_results="hCoCena"
+PATH_CoCena_results = "hCoCena"
 
 
-CoCena_Input_HC <- readRDS("../data/CoCena_Input_HC.rds")
-vst_data <- counts(CoCena_Input_HC, normalized=TRUE)
+CoCena_Input_KC <- readRDS("../data/CoCena_Input_KC_WT.rds")
+
+vst_data <- counts(CoCena_Input_KC, normalized=TRUE)
 #vst_data <- DESeq2::vst(CoCena_Input_KC, blind = F)
 
 #data_seq <- as.data.frame(assay(vst_data))
 data_seq <- as.data.frame(vst_data)
-annotation_seq <- as.data.frame(colData(CoCena_Input_HC))
+annotation_seq <- as.data.frame(colData(CoCena_Input_KC))
 
 
 init_wd(dir_count_data = F,
@@ -62,7 +64,7 @@ init_wd(dir_count_data = F,
 
 ```{r check directories}
 check_dirs()
-init_save_folder(name = "results_HC")
+init_save_folder(name = "results_KC_wt")
 ```
 
 ## Defining layers
@@ -124,7 +126,7 @@ hcocena::suggest_topvar()
 ```{r layer-specific settings}
 
 set_layer_settings(top_var = 5000,
-                   min_corr = rep(0.6, length(hcobject[["layers"]])), 
+                   min_corr = rep(0.60, length(hcobject[["layers"]])), 
                    range_cutoff_length = rep(100, length(hcobject[["layers"]])),
                    print_distribution_plots = rep(F, length(hcobject[["layers"]])))
 
@@ -159,9 +161,9 @@ plot_cutoffs(interactive = T)
   
   The order in which the cutoffs are subsequently defined must correspond to the order in which the layers have previously been specified.
   LS: Strategy used to choose threshold: 
-  1 - check No of DE-Genes  (694)
-  2 - determine range of +-20% [833 - 555]
-  3 - within determined range select highest Rsquared ( here 0.737)
+  1 - check No of DE-Genes  (1124)
+  2 - determine range of +-20% [1349 - 899]
+  3 - within determined range select highest Rsquared ( here 0.85)
   
 
 ```{r choose cutoff}
@@ -225,10 +227,7 @@ res=cluster_calculation(cluster_algo = "cluster_leiden",no_of_iterations = 100, 
 #col_anno_categorical(variables = NULL, variable_label = NULL) 
 #col_anno_categorical(variables = c("Maternal_diet"), variable_label = "Maternal_diet") 
 plot_cluster_heatmap(cluster_columns = F,
-                     col_order = c("wt_cdcdcd_HC","ko_cdcdcd_HC",
-                                   "wt_cdcdhfd_HC","ko_cdcdhfd_HC",
-                                   "wt_hfdcdcd_HC","ko_hfdcdcd_HC",
-                                   "wt_hfdhfdhfd_HC","ko_hfdhfdhfd_HC"))
+                     col_order = levels(annotation_seq$Merged))
 ```
 
 
@@ -244,7 +243,7 @@ NOTE: due to issues in the communication between R and Cytoscape, please refer t
 
 ```{r plot network coloured by cluster, fig.width=10, fig.height=7}
 
-plot_integrated_network() 
+# plot_integrated_network() 
 
 ```
 
@@ -253,13 +252,10 @@ plot_integrated_network()
 
   If you would like to evaluate how well each gene belongs to its asserted cluster, please refer to the satellite markdown, section "Cluster scores".
 ```{r}
-#get_cluster_scores()
-```
-
-
-```{r GO profiling, fig.width = 10, fig.height = 7, message = F, warning = F}
-
 #Export CLusters
+#clusterRes=hcocena::cluster_calculation(return_result = T)
+# take the clusters for profiling
+
 KEGGset <- msigdbr::msigdbr(
   species = "Mus musculus",
   category = "C2",
@@ -273,23 +269,36 @@ Hallmarkset <- msigdbr::msigdbr(
 res <- as.data.frame(res)
 clusterGenes <- list()
 
+i = "GLYCOLYSIS"
+allTermAssocGenesHallmark <- unique(Hallmarkset[grepl(i,Hallmarkset$gs_name),"ensembl_gene"])
+allTermAssocGenesKEGG <- unique(KEGGset[grepl(i,KEGGset$gs_name),"ensembl_gene"])
+hifa <- rownames(rowData(CoCena_Input_KC)[which(grepl("Hif1a$",rowData(CoCena_Input_KC)$SYMBOL)),1:3])
+
 
 for(i in unique(res$color)){
   if(i == "white"){
     next
   }
   clusterGenes[[i]] <- strsplit(res[res$color==i,"gene_n"],split=",")[[1]]
+  print(paste0(i, " Hif1a present: ", hifa %in% clusterGenes[[i]] ))
+  #print(table(allTermAssocGenesHallmark$ensembl_gene%in%strsplit(res[res$color==i,"gene_n"],split=",")[[1]]))
+  #print(table(allTermAssocGenesKEGG$ensembl_gene%in%strsplit(res[res$color==i,"gene_n"],split=",")[[1]]))
+  
 }
 
 
 
 # get_cluster_scores()
-```
 
+
+```
 
 ## Do ORA analysis
 
-```{r}
+```{r GO profiling, fig.width = 10, fig.height = 7, message = F, warning = F}
+
+
+source("../utils/doORA.R")
 library(msigdbr)
 library(clusterProfiler)
 
@@ -297,31 +306,165 @@ union_all_genes_in_network <- rownames(hcobject$integrated_output$GFC_all_layers
 
 input_genes <- rownames(hcobject$layer_specific_outputs$set1$part2$GFC_all_genes)# 5000 gene universe
 
-universe_entrez <- clusterProfiler::bitr(input_genes, 
-                        fromType = "ENSEMBL",
-                        toType = "ENTREZID",
-                        OrgDb = "org.Mm.eg.db")$ENTREZID
+all_genes <- rownames(vst_data)
+# all gene universe
+# 
 
+
+universe_entrez <- clusterProfiler::bitr(input_genes, 
+                        fromType="ENSEMBL",
+                        toType="ENTREZID",
+                        OrgDb="org.Mm.eg.db")$ENTREZID
 
 ORA_cluster_results <- list()
-
-setwd("hCoCena/results_HC/")
-for(i in unique(res$color)){ 
+setwd("hCoCena/results_KC_wt/")
+for(i in unique(res$color)){ # clusterRes$color
   if(i == "white"){
     next
   }
-  fileName = paste0("hCoCena/results_HC/HC_",i)
+  fileName = paste0("KC_",i)
   ORA_cluster_results[[i]] <- doOra(
     clusterGenes[[i]], # ENSEBML
-    type=c("KEGG","GO","HALLMARK"),
+    type=c("KEGG","HALLMARK","GO"), #GO
     levelGOTerms=6,
     universe_entrez,
     filename = fileName # will be ORA_[filename][type].png
   )
-    ORA_cluster_results[[i]][["GeneSet"]] <- clusterGenes[[i]]
+  
+  pval=ORA_cluster_results[[i]]$KEGG[grepl("GLYCOLYSIS",ORA_cluster_results[[i]]$KEGG$ID),"qvalue"]
+  pval_H=ORA_cluster_results[[i]]$HALLMARK[grepl("GLYCOLYSIS",ORA_cluster_results[[i]]$HALLMARK$ID),"qvalue"]
+  print(paste0(i,"Gly KEGG: ",pval))
+  print(paste0(i,"Gly HALLMARK: ",pval_H))
+  
+    pval=ORA_cluster_results[[i]]$KEGG[grepl("HYPOXIA",ORA_cluster_results[[i]]$KEGG$ID),"qvalue"]
+  pval_H=ORA_cluster_results[[i]]$HALLMARK[grepl("HYPOXIA",ORA_cluster_results[[i]]$HALLMARK$ID),"qvalue"]
+  print(paste0(i,"Hyp KEGG: ",pval))
+  print(paste0(i,"Hyp HALLMARK: ",pval_H))
+  
+  ORA_cluster_results[[i]][["GeneSet"]] <- clusterGenes[[i]]
 }
 
+
+
+setwd("../../")
+
 ## Save for html file of data overview
-saveRDS(ORA_cluster_results,"Transcriptomics_ORA_CoCena_results_HC.rds")
+saveRDS(ORA_cluster_results,"Transcriptomics_ORA_CoCena_results_KC_WT.rds")
+
 
 ```
+
+# get Heatmaps of enriched Pathways
+
+```{r}
+selectedPathways <- c("OXIDATIVE_PHOSPHORYLATION","GLYCOLYSIS","HYPOXIA","NoraSet")
+
+
+# subset to those genes of interest w.r.t to cluster
+
+data2sum <-  vst_data
+
+for(i in selectedPathways){
+  print(unique(KEGGset$gs_name[grepl(i,KEGGset$gs_name)]))
+  allTermAssocGenesKEGG <- unique(KEGGset[grepl(i,KEGGset$gs_name),"ensembl_gene"])
+  print(unique(Hallmarkset$gs_name[grepl(i,Hallmarkset$gs_name)]))
+  allTermAssocGenesHallmark <- unique(Hallmarkset[grepl(i,Hallmarkset$gs_name),"ensembl_gene"])
+  union <- unique(c(allTermAssocGenesKEGG$ensembl_gene,allTermAssocGenesHallmark$ensembl_gene))
+  
+  
+  #select all genes present in cluster of interest
+  if(i=="OXIDATIVE_PHOSPHORYLATION"){
+     union_selected <- union[union %in% ORA_cluster_results[["turquoise"]]$GeneSet]
+  }
+  if(i =="GLYCOLYSIS"){
+     union_selected <- union[union %in% ORA_cluster_results[["plum"]]$GeneSet]
+  }
+ 
+  # if(i =="INTERFERON_GAMMA_RESPONSE"){ # hif1a in here
+  #    union_selected <- union[union %in% ORA_cluster_results[["turquoise"]]$GeneSet]
+  # }
+  
+    if(i =="HYPOXIA"){ # hif1a in here
+     union_selected <- union[union %in% ORA_cluster_results[["plum"]]$GeneSet]
+  }
+  
+  if(i == "NoraSet"){
+    union_selected <- c("Il1b","Gusb","Tgdbi", "Aldob", "Pgam1", "Stmn1","Rars","Sdhc",
+                        "Ppfia4","Ak3","Hif1a","Egfr","Qsox1","Galk2","Got2","Idua",
+                        "Dcn","Slc25a10","Srd5a3","Med24","Chpf2","Mpi","Ugp2","Il15")
+    union_selected <- rownames(rowData(CoCena_Input_KC)[rowData(CoCena_Input_KC)[,"SYMBOL"]%in%union_selected,])
+    
+  }
+  
+  print(length(union_selected))
+  #union_selected <- union[union %in% unique(unlist(lapply(ORA_cluster_results,function(x) x$GeneSet)))]
+  
+  print(paste0("Hif1a in data: ", hifa %in% allTermAssocGenesKEGG ))
+  print(paste0("Hif1a in data: ", hifa %in% allTermAssocGenesHallmark ))
+
+  print(paste0("Hif1a in data: ", hifa %in% union_selected))
+  
+
+  
+  subsetData <- data2sum[rownames(data2sum) %in% union_selected,]
+  subsetData_df <- as.data.frame(t(subsetData))
+  subsetData_df <- cbind(subsetData_df,colData(CoCena_Input_KC)[rownames(subsetData_df),"Merged"])
+  colnames(subsetData_df)[ncol(subsetData_df)] <- "Merged"
+  
+  
+  mean_per_condition = aggregate(x = subsetData_df[,-ncol(subsetData_df)],
+                                 by = list(as.factor(subsetData_df[,"Merged"])),
+                                 FUN = mean)
+  rownames(mean_per_condition) <- gsub("_Adult","",mean_per_condition$Group.1)
+  mean_per_condition$Group.1 <- NULL
+  
+  
+  colnames(mean_per_condition) <- rowData(CoCena_Input_KC)[rownames(rowData(CoCena_Input_KC)) %in% colnames(mean_per_condition),"SYMBOL"]
+  
+  #z_values <- as.data.frame(t(apply(mean_per_condition,1,scale)))
+  z_values <- mean_per_condition
+  colnames(z_values) <- colnames(mean_per_condition)
+  nBins_each <- 10
+  myColor <- c(colorRampPalette(c("#0077b6", "#d9effa"))(nBins_each),
+               "white",
+               colorRampPalette(c("#ffe8e8","#D62828"))(nBins_each)
+  )
+  
+  colorTheme <- c("#c6c6c6","#606060","#c12c38","#e0775f","#f3b694","#fce2d0")
+  names(colorTheme) <-c("cdcdcd",
+                        "cdcdhfd",
+                        "hfdcdcd",
+                        "hfdcdhfd",
+                        "hfdhfdcd",
+                        "hfdhfdhfd")
+  
+  annoCol <- list(group = colorTheme)
+  col_anno = data.frame(group = names(colorTheme))
+  rownames(col_anno) = col_anno$group
+  
+
+  
+
+  heatmap <- pheatmap(z_values,
+                 color = myColor,
+                scale="column",
+                # breaks = myBreaks, # no manual adjustment needed if scaling 
+                # display_numbers = as.data.frame(t(result_sig)), # needs to be a matrix of same dim as LFC Table
+                 fontsize_number = 15,
+                 cellheight = 10,
+                 cellwidth = 10,
+                # filename = givenFilename,
+                 annotation_colors = annoCol,
+                 annotation_row  = col_anno,
+                 treeheight_row = 0,
+                 treeheight_col = 0,
+                main = i,
+                angle_col = 90,
+                cluster_rows = F
+  )
+  
+}
+
+
+```
+
