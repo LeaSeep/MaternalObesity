@@ -297,7 +297,6 @@ for(i in unique(res$color)){
 
 ```{r GO profiling, fig.width = 10, fig.height = 7, message = F, warning = F}
 
-
 source("../utils/doORA.R")
 library(msigdbr)
 library(clusterProfiler)
@@ -311,7 +310,7 @@ all_genes <- rownames(vst_data)
 # 
 
 
-universe_entrez <- clusterProfiler::bitr(input_genes, 
+universe_entrez <- clusterProfiler::bitr(all_genes, 
                         fromType="ENSEMBL",
                         toType="ENTREZID",
                         OrgDb="org.Mm.eg.db")$ENTREZID
@@ -326,7 +325,7 @@ for(i in unique(res$color)){ # clusterRes$color
   ORA_cluster_results[[i]] <- doOra(
     clusterGenes[[i]], # ENSEBML
     type=c("KEGG","HALLMARK","GO"), #GO
-    levelGOTerms=6,
+    levelGOTerms=3,
     universe_entrez,
     filename = fileName # will be ORA_[filename][type].png
   )
@@ -336,7 +335,7 @@ for(i in unique(res$color)){ # clusterRes$color
   print(paste0(i,"Gly KEGG: ",pval))
   print(paste0(i,"Gly HALLMARK: ",pval_H))
   
-    pval=ORA_cluster_results[[i]]$KEGG[grepl("HYPOXIA",ORA_cluster_results[[i]]$KEGG$ID),"qvalue"]
+  pval=ORA_cluster_results[[i]]$KEGG[grepl("HYPOXIA",ORA_cluster_results[[i]]$KEGG$ID),"qvalue"]
   pval_H=ORA_cluster_results[[i]]$HALLMARK[grepl("HYPOXIA",ORA_cluster_results[[i]]$HALLMARK$ID),"qvalue"]
   print(paste0(i,"Hyp KEGG: ",pval))
   print(paste0(i,"Hyp HALLMARK: ",pval_H))
@@ -359,7 +358,7 @@ saveRDS(ORA_cluster_results,"Transcriptomics_ORA_CoCena_results_KC_WT.rds")
 ```{r}
 selectedPathways <- c("OXIDATIVE_PHOSPHORYLATION","GLYCOLYSIS","HYPOXIA","NoraSet")
 
-
+selectedPathways <- c("HALLMARK_INFLAMMATORY_RESPONSE")
 # subset to those genes of interest w.r.t to cluster
 
 data2sum <-  vst_data
@@ -378,6 +377,9 @@ for(i in selectedPathways){
   }
   if(i =="GLYCOLYSIS"){
      union_selected <- union[union %in% ORA_cluster_results[["plum"]]$GeneSet]
+  }
+    if(i =="HALLMARK_INFLAMMATORY_RESPONSE"){
+     union_selected <- union[union %in% ORA_cluster_results[["steelblue"]]$GeneSet]
   }
  
   # if(i =="INTERFERON_GAMMA_RESPONSE"){ # hif1a in here
@@ -398,6 +400,8 @@ for(i in selectedPathways){
   
   print(length(union_selected))
   #union_selected <- union[union %in% unique(unlist(lapply(ORA_cluster_results,function(x) x$GeneSet)))]
+ # union_selected <- ORA_cluster_results$steelblue$GeneSet
+  
   
   print(paste0("Hif1a in data: ", hifa %in% allTermAssocGenesKEGG ))
   print(paste0("Hif1a in data: ", hifa %in% allTermAssocGenesHallmark ))
@@ -453,7 +457,7 @@ for(i in selectedPathways){
                  fontsize_number = 15,
                  cellheight = 10,
                  cellwidth = 10,
-                # filename = givenFilename,
+                 #filename = givenFilename,
                  annotation_colors = annoCol,
                  annotation_row  = col_anno,
                  treeheight_row = 0,
