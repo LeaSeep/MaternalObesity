@@ -1,7 +1,7 @@
 # Transcriptomics Analysis ----
 ## Overview ----
-# This script includes the transcritpome analysis of Hepatocytes (HC) as well as
-# Kupffer-Cells (KC) - both Hif1a ko as well as 
+# This script includes the transcriptome analysis of Hepatocytes (HC) as well as
+# Kupffer-Cells (KC) - both Hif1a ko as well as wild type. 
 # Including DE, ORA and Ligand-Receptor analysis. The Input for CoCena is generated here.
 # The CoCena analysis is done in the respective Rmd, to be found in the same folder
 
@@ -14,17 +14,20 @@
 
 ## Output----
 # (output to script's folder):
-#   - DE-results object (KF & HC) - displayed in table-format in provided html file
+#   - DE-results object (KC [wt and ko] & HC) - displayed in table-format in provided html file
 #   - PCA plots
 #   - Over-representation (ORA) plots for desired contrasts (KEGG, GO, HALLMARK)
 #   - ORA-result objects
 #   - Ligand-Receptor plot
-#   - CoCena Heatmap
-#   - CoCena Cluster ORA plots
+#.  - CoCena Input
+
 
 # SetUp ----
 
-setwd("transcriptome_analysis")
+if(gsub("^.+/","",getwd())!="transcriptome_analysis"){
+  setwd("transcriptome_analysis")
+}
+
 
 library("clusterProfiler")
 library("msigdbr")
@@ -44,10 +47,14 @@ output_result_list <- list()
 dds_KC <- readRDS("../data/DESeq_Obj_KC.rds")
 dds_HC <- readRDS("../data/DESeq_Obj_HC.rds")
 
+dds_KC_WT <- readRDS("../data/DESeq_Obj_KC_WT.rds")
+
 # Settings for both
 colorTheme = c("#a6cee3","#1f78b4","#b2df8a","#33a02c",
                "#fdbf6f","#ff7f00","#fb9a99","#e31a1c")
 
+
+colorTheme_wt = c("#c6c6c6","#606060","#c12c38","#e0775f","#f3b694","#fce2d0")
 dds_KC$Merged <- factor(dds_KC$Merged,
                         levels=c("wt_cdcdcd_KC","ko_cdcdcd_KC",
                                  "wt_cdcdhfd_KC","ko_cdcdhfd_KC",
@@ -56,6 +63,7 @@ dds_KC$Merged <- factor(dds_KC$Merged,
 # DE-Analysis ----
 
 ## KC ----
+### Hif1a ----
 #remove transcript idenitifier
 rownames(dds_KC) <- gsub("\\..*","",rownames(dds_KC))
 rownames(dds_KC) <- gsub("\\..*","",rownames(dds_KC))
@@ -69,7 +77,7 @@ removeOutliers <- T
 
 if(removeOutliers){
 dds_KC <- dds_KC[,-c(
-    which(colnames(dds_KC) %in% c("12553","12555","12569"))
+    which(colnames(dds_KC) %in% c("12553","12555","12558","12557"))#,"12569"))
     )]
 }
 
@@ -78,7 +86,7 @@ dds_KC_preFilter <- dds_KC
 dds_KC <- preprocessing(dds_KC,10,
                         protCodingOnly=T,
                         removeConstRows=T,
-                        filterPerSample=F)
+                        filterPerSample=T)
 de_seq_result_KC <- DESeq(dds_KC) 
 
 res_KC <- results(de_seq_result_KC,
@@ -87,7 +95,7 @@ res_KC <- results(de_seq_result_KC,
 summary(res_KC)
 output_result_list[["dds_KC"]] <- res_KC
 
-### PCA ----
+#### PCA ----
 colnames(colData(de_seq_result_KC))
 vst_de_seq_result_KC <- vst(de_seq_result_KC,blind=T)
 vst_de_seq_result_KC$Merged <- factor(vst_de_seq_result_KC$Merged,
@@ -101,7 +109,56 @@ KC_PCA <- doPCA(
   shapeVar = "Maternal.diet", # one of colnames in colData(dds)
   colorVar = "Merged" # one of colnames in colData(dds)
   )
-ggsave(filename = paste0("KC_PCA_",Sys.Date(),".png"), plot=KC_PCA)
+ggsave(filename = paste0("KC_PCA_",Sys.Date(),".png"), plot = KC_PCA)
+ggsave(filename = paste0("KC_PCA_",Sys.Date(),".svg"), plot = KC_PCA)
+
+### WT ----
+#remove transcript idenitifier
+rownames(dds_KC_WT) <- gsub("\\..*","",rownames(dds_KC_WT))
+rownames(dds_KC_WT) <- gsub("\\..*","",rownames(dds_KC_WT))
+dds_KC_WT$Condition <- gsub("H","h",dds_KC_WT$Condition)
+
+dds_KC_WT$Condition <- as.factor(dds_KC_WT$Condition)
+
+removeOutliers <- T
+dim(dds_KC_WT)
+if(removeOutliers){
+  dds_KC_WT <- dds_KC_WT[,-c(
+    which(colnames(dds_KC_WT) %in% c("5819","5821","6025","5953",
+                                     "5860","5822","5823","5859"))
+  )]
+}
+dim(dds_KC_WT)
+
+design(dds_KC_WT)=~Condition
+dds_KC_preFilter <- dds_KC_WT
+dds_KC_WT <- preprocessing(dds_KC_WT,10,
+                        protCodingOnly=T,
+                        removeConstRows=T,
+                        filterPerSample=T)
+de_seq_result_KC_WT <- DESeq(dds_KC_WT) 
+
+res_KC_wt <- results(de_seq_result_KC_WT,
+                  contrast =c("Condition","hfdcdcd","cdcdcd"),
+                  alpha = 0.1)
+summary(res_KC_wt)
+output_result_list[["dds_KC_WT"]] <- res_KC_wt
+
+#### PCA ----
+colnames(colData(de_seq_result_KC_WT))
+vst_de_seq_result_KC_wt <- vst(de_seq_result_KC_WT,blind=T)
+vst_de_seq_result_KC_wt$Merged <- factor(vst_de_seq_result_KC_wt$Condition,
+                                      levels=c("cdcdcd","cdcdhfd",
+                                               "hfdcdcd","hfdcdhfd",
+                                               "hfdhfdcd","hfdhfdhfd"))
+KC_PCA <- doPCA(
+  vst_de_seq_result_KC_wt,
+  colorTheme = colorTheme_wt,
+  shapeVar = "Maternal_diet", # one of colnames in colData(dds)
+  colorVar = "Condition" # one of colnames in colData(dds)
+)
+ggsave(filename = paste0("KC_WT_PCA_",Sys.Date(),".png"), plot=KC_PCA)
+ggsave(filename = paste0("KC_WT_PCA_",Sys.Date(),".svg"), plot=KC_PCA)
 
 ## HC ----
 #remove transcript idenitifier
@@ -109,7 +166,12 @@ rownames(dds_HC) <- gsub("\\..*","",rownames(dds_HC))
 rownames(dds_HC) <- gsub("\\..*","",rownames(dds_HC))
 
 dds_HC_preFilter <- dds_HC
-dds_HC <- preprocessing(dds_HC,10)
+dds_HC <- preprocessing(dds_HC,
+                        10,
+                        protCodingOnly=T,
+                        removeConstRows=T,
+                        filterPerSample=T
+                        )
 design(dds_HC)=~Merged
 de_seq_result_HC <- DESeq(dds_HC) 
 res_HC <- results(de_seq_result_HC,
@@ -132,6 +194,7 @@ HC_PCA <- doPCA(
   colorVar = "Merged" # one of colnames in colData(dds)
 )
 ggsave(filename = paste0("HC_PCA_",Sys.Date(),".png"), plot=HC_PCA)
+ggsave(filename = paste0("HC_PCA_",Sys.Date(),".svg"), plot=HC_PCA)
 
 # ORA - Analysis ----
 #Universe HC
@@ -206,12 +269,18 @@ CoCena_Input_HC <- DESeq(dds_HC)
 saveRDS(CoCena_Input_HC,"../data/CoCena_Input_HC.rds")
 
 ## KC Co-expression analysis ----
-
+### Hif1a ----
 #keep <- rowSums(counts(dds_KC) >= 10) >= ceiling(0.25*ncol(dds_KC))
 #dds_KC_coCena <- dds_KC[keep,]
 CoCena_Input_KC <- DESeq(dds_KC)
 
 saveRDS(CoCena_Input_KC,"../data/CoCena_Input_KC.rds")
+
+### WT ----
+CoCena_Input_KC_WT <- DESeq(dds_KC_WT)
+
+saveRDS(CoCena_Input_KC_WT,"../data/CoCena_Input_KC_WT.rds")
+
 
 # Save everything ----
 saveRDS(output_result_list, file = "Transcriptomics_results.rds")
