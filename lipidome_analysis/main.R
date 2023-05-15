@@ -20,6 +20,9 @@
 
 # SetUp ----
 setwd("lipidome_analysis")
+if(!("pics" %in% list.dirs())){
+  dir.create("pics", showWarnings = FALSE)
+}
 # source relevant custom functions from utils folder
 library(pheatmap)
 library(SummarizedExperiment)
@@ -90,7 +93,7 @@ results_wt <- doSigLFCHeatmap(
   summarise_by = "CLASS_2", # column of RowAnno
   LFC_between = "diet", # column of sampleAnno
   FC_ctrl = "CD_CD_CD", # one level from colum selected in 'LFC_between',
-  givenFilename = paste0("Heatmap_wt_",Sys.Date(),".png"),
+  givenFilename = paste0("pics/","Heatmap_wt_",Sys.Date(),".png"),
   subset = c("TACG_unsat","TACG_sat","DAG", "CE", "MAG"), # put to NULL to get entire Heatmap
   colorTheme = colorTheme # needs to be named
 )
@@ -111,8 +114,8 @@ WT_PCA <- doPCA(
   shapeVar = "MaternalDiet", # one of colnames in colData(dds)
   colorVar = "diet" # one of colnames in colData(dds)
 )
-ggsave(filename = paste0("PCA_wt_",Sys.Date(),".png"), plot=WT_PCA)
-
+ggsave(filename = paste0("pics/","PCA_wt_",Sys.Date(),".png"), plot=WT_PCA)
+ggsave(filename = paste0("pics/","PCA_wt_",Sys.Date(),".svg"), plot=WT_PCA)
 
 
 # Hif1a KC ----
@@ -176,7 +179,7 @@ results_ko <- doSigLFCHeatmap(
   summarise_by = "CLASS_2", # column of RowAnno
   LFC_between = "merged", # column of sampleAnno
   FC_ctrl = "CDCDCD_wt", # one level from colum selected in 'LFC_between',
-  givenFilename = paste0("Heatmap_ko_",Sys.Date(),".png"),
+  givenFilename = paste0("pics/","Heatmap_ko_",Sys.Date(),".png"),
   subset = c("TACG_unsat","TACG_sat","DAG", "CE", "MAG"), # put to NULL to get entire Heatmap
   colorTheme = colorTheme # needs to be named
 )
@@ -204,7 +207,10 @@ KO_PCA <- doPCA(
   shapeVar = "Maternal.diet", # one of colnames in colData(dds)
   colorVar = "merged" # one of colnames in colData(dds)
 )
-ggsave(filename = paste0("PCA_ko",Sys.Date(),".png"), plot=KO_PCA)
+ggsave(filename = paste0("pics/","PCA_ko_",Sys.Date(),".png"), plot=KO_PCA)
+ggsave(filename = paste0("pics/","PCA_ko_",Sys.Date(),".svg"), plot=KO_PCA)
 
 # Save Results ----
 saveRDS(output_result_list,"Lipidomic_stats_result.rds")
+
+setwd("..")
