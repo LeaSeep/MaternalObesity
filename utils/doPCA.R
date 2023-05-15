@@ -31,27 +31,28 @@ doPCA <- function(dds,
   }
 if(is.null(colorTheme)){
   pca_plot <- ggplot(pcaData, aes(x = pcaData[,xPC],
-                                  y = pcaData[,yPC],
-                                  color=pcaData[,colorVar])) +
-    geom_point(size =3,aes(shape=pcaData[,shapeVar]))+
+                                  y = pcaData[,yPC])) +
+    geom_point(size =3,aes(shape=pcaData[,shapeVar],fill=pcaData[,colorVar]))+
+    scale_shape_manual(values=c(21,24))+
+    guides(fill = guide_legend(override.aes = list(shape = 21))) +
     xlab(paste0(names(percentVar[xPC]),": ",percentVar[xPC], "% variance")) +
     ylab(paste0(names(percentVar[yPC]),": ", percentVar[yPC], "% variance")) +
     coord_fixed()+
     theme_classic()+
-    theme(aspect.ratio = 1)
+    theme(text=element_text(size = 21),aspect.ratio = 1)
 }else{
   pca_plot <- ggplot(pcaData, aes(x = pcaData[,xPC],
-                                  y = pcaData[,yPC],
-                                  color = pcaData[,colorVar]
-                                  )) +
-    geom_point(size =3,aes(shape=pcaData[,shapeVar]))+
-    scale_color_manual(values = colorTheme,
-                       name = colorVar)+
+                                  y = pcaData[,yPC])) +
+    geom_point(size =3,aes(shape = pcaData[,shapeVar],fill = pcaData[,colorVar]))+
+    scale_shape_manual(values = c(21,24)) +
+    scale_fill_manual(values = colorTheme,
+                       name = colorVar) +
+    guides(fill = guide_legend(override.aes = list(shape = 21))) +
     xlab(paste0(names(percentVar[xPC]),": ",percentVar[xPC], "% variance")) +
     ylab(paste0(names(percentVar[yPC]),": ", percentVar[yPC], "% variance")) +
     coord_fixed()+
     theme_classic()+
-    theme(aspect.ratio = 1)
+    theme(text=element_text(size = 21),aspect.ratio = 1)
 }
 
   

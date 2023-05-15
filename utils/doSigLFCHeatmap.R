@@ -117,25 +117,42 @@ doSigLFCHeatmap=function(
   min_both <- min(abs(c(min_positive_sig_LFC,min_negative_sig_LFC)))
 
   
-  myColor <- c(colorRampPalette(c("#0077b6", "#d9effa"))((paletteLength-1)/2),
+  
+  nBins_each = floor(max(LFC_table_per_lipidClass)/min_both)
+  
+  myColor <- c(colorRampPalette(c("#0077b6", "#d9effa"))(nBins_each),
                "white",
-               colorRampPalette(c("#ffe8e8","#D62828"))((paletteLength-1)/2)
+               colorRampPalette(c("#ffe8e8","#D62828"))(nBins_each)
   )
+  
   
   # if scaling wanted
   #LFC_table_per_lipidClass=scale(LFC_table_per_lipidClass)
-  myBreaks <- c(
-      seq(-max(LFC_table_per_lipidClass),-min_both,length.out=(paletteLength-1)/2),
-      0,
-      seq(min_both,max(LFC_table_per_lipidClass),length.out=(paletteLength-1)/2)
-      )
+
+  nbins_needed = ceiling((max(LFC_table_per_lipidClass)-min_both)/min_both)*2+1
   
+  myBreaks <- (c(rev(seq(1,nbins_needed,by=2))*-1,seq(1,nbins_needed,by=2))*min_both)/2
+  
+  
+  if(length(myBreaks)>20){
+    myColor <- c(colorRampPalette(c("#0077b6", "#d9effa"))(10),
+                 "white",
+                 colorRampPalette(c("#ffe8e8","#D62828"))(10)
+    )
+    myBreaks <- c(
+      seq(-max(LFC_table_per_lipidClass),-min_both,length.out=10),
+      (min_both/-2),
+      min_both/2,
+      seq(min_both,max(LFC_table_per_lipidClass),length.out=10)
+    )
+  }
+ 
   ## Add group colors
   # browser()
   annoCol <- list(group = colorTheme)
   col_anno = data.frame(group = names(colorTheme))
   rownames(col_anno) = col_anno$group
-  
+
   LFC_table_per_lipidClass = as.data.frame(LFC_table_per_lipidClass)
   heatmap <- pheatmap(as.data.frame(t(LFC_table_per_lipidClass)),
                    color = myColor,
@@ -148,6 +165,50 @@ doSigLFCHeatmap=function(
                    annotation_colors = annoCol,
                    annotation_col = col_anno
   )
+  # save as svg
+  heatmap <- pheatmap(as.data.frame(t(LFC_table_per_lipidClass)),
+                      color = myColor,
+                      breaks = myBreaks, # no manual adjustment needed if scaling 
+                      display_numbers = as.data.frame(t(result_sig)), # needs to be a matrix of same dim as LFC Table
+                      fontsize_number = 15,
+                      cellheight = 15,
+                      cellwidth = 20,
+                      filename = gsub(".png",".tiff",givenFilename),
+                      annotation_colors = annoCol,
+                      annotation_col = col_anno
+  )
+  
+
+  
+  # create color histogram
+  col_hist_df=data.frame(dataPoints=unlist(LFC_table_per_lipidClass))
+  col_hist_df$breaks = cut(col_hist_df$dataPoints,breaks = myBreaks)
+  
+  color_df = data.frame(x=levels(col_hist_df$breaks),y=1)
+  #color_df = rbind(df_for_color,df_for_color)
+
+  
+  library(ggplot2)
+  color_df$x=factor(color_df$x,levels= levels(col_hist_df$breaks))
+
+  #max(table(col_hist_df$breaks))
+  
+  
+  colorKey=ggplot()+
+    geom_raster(data=color_df, aes(x = x, y = 1,fill = x), alpha=0.8, show.legend = FALSE, vjust = 0)+
+    scale_fill_manual(values = myColor ,breaks = levels(color_df$x), drop=F)+
+    geom_bar(data = col_hist_df,
+                   aes(x=breaks, y=(..count..)/(max(table(col_hist_df$breaks))+1)),
+                   stat="count",
+                   fill=NA,
+                   color="black",
+                   show.legend = FALSE)+
+    scale_x_discrete(drop=FALSE)+
+    theme_void()
+  
+  ggsave(filename = gsub(".png","_colorHist.png",givenFilename), plot = colorKey)
+  ggsave(filename = gsub(".png","_colorHist.svg",givenFilename), plot = colorKey)
+  
   
   # create results
   return(list(stat_res_pVal = result_sig_pVals, LFC_Values = LFC_table_per_lipidClass))

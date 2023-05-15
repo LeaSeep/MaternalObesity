@@ -1,6 +1,6 @@
 doKallisto2dds <- function(
     kallisto_path,
-    sampleTable,
+    sampleTable, # one column needs to be called ID!
     tx_anno_path
     ){
 
