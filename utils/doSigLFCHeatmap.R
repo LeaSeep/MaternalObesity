@@ -24,7 +24,8 @@ doSigLFCHeatmap=function(
     FC_ctrl="CDCDCD",
     givenFilename="Heatmap.png",
     subset = NULL,
-    colorTheme
+    colorTheme,
+    transposed = T
 ){
 
   paste0("Number of Lipids with negative entries (removed): ",length(unique(as.data.frame(which(data_matrix<0,arr.ind = T))[,1])))
@@ -82,7 +83,7 @@ doSigLFCHeatmap=function(
     result_testing=summary(fit) # to get the mean now intercept + estimate
     rownames(result_testing$coefficients)=gsub(LFC_between,"",rownames(result_testing$coefficients))
     result_sig_pVals[names(result_testing$coefficients[-1,4]),i] <- result_testing$coefficients[-1,4]
-    is_one_star=result_testing$coefficients[-1,4]<0.05 # withouth intercept
+    is_one_star=result_testing$coefficients[-1,4]<0.05 # without intercept
     is_two_star=result_testing$coefficients[-1,4]<0.01 
     is_three_star=result_testing$coefficients[-1,4]<0.001
     result_sig[names(is_one_star),i][is_one_star]="*"
@@ -152,30 +153,51 @@ doSigLFCHeatmap=function(
   annoCol <- list(group = colorTheme)
   col_anno = data.frame(group = names(colorTheme))
   rownames(col_anno) = col_anno$group
-
   LFC_table_per_lipidClass = as.data.frame(LFC_table_per_lipidClass)
-  heatmap <- pheatmap(as.data.frame(t(LFC_table_per_lipidClass)),
+  if(transposed){
+    data2PLot <- as.data.frame(t(LFC_table_per_lipidClass))
+    resultSig2Plot <- as.data.frame(t(result_sig))
+    col_2_row <- NULL
+    col_2_column <- col_anno
+    cluster_rows <- T
+    cluster_cols <- T
+  }else{
+    data2PLot <- as.data.frame((LFC_table_per_lipidClass))
+    resultSig2Plot <- as.data.frame((result_sig))
+    col_2_row <- col_anno
+    col_2_column <- NULL
+    cluster_rows <- T
+    cluster_cols <- T
+  }
+  
+  heatmap <- pheatmap(data2PLot,
                    color = myColor,
                    breaks = myBreaks, # no manual adjustment needed if scaling 
-                   display_numbers = as.data.frame(t(result_sig)), # needs to be a matrix of same dim as LFC Table
+                   display_numbers = resultSig2Plot, # needs to be a matrix of same dim as LFC Table
                    fontsize_number = 15,
                    cellheight = 15,
                    cellwidth = 20,
                    filename = givenFilename,
                    annotation_colors = annoCol,
-                   annotation_col = col_anno
+                   annotation_row = col_2_row,
+                   annotation_col = col_2_column,
+                   cluster_rows = cluster_rows,
+                   cluster_cols = cluster_cols,
   )
   # save as svg
-  heatmap <- pheatmap(as.data.frame(t(LFC_table_per_lipidClass)),
+  heatmap <- pheatmap(data2PLot,
                       color = myColor,
                       breaks = myBreaks, # no manual adjustment needed if scaling 
-                      display_numbers = as.data.frame(t(result_sig)), # needs to be a matrix of same dim as LFC Table
+                      display_numbers = resultSig2Plot, # needs to be a matrix of same dim as LFC Table
                       fontsize_number = 15,
                       cellheight = 15,
                       cellwidth = 20,
                       filename = gsub(".png",".tiff",givenFilename),
                       annotation_colors = annoCol,
-                      annotation_col = col_anno
+                      annotation_row = col_2_row,
+                      annotation_col = col_2_column,
+                      cluster_rows = cluster_rows,
+                      cluster_cols = cluster_cols,
   )
   
 
@@ -189,21 +211,25 @@ doSigLFCHeatmap=function(
 
   
   library(ggplot2)
-  color_df$x=factor(color_df$x,levels= levels(col_hist_df$breaks))
-
+  color_df$x=factor(color_df$x,levels= levels(col_hist_df$breaks),ordered = T)
+  #col_hist_df$breaks=factor(col_hist_df$breaks,levels= levels(color_df$breaks),ordered = T)
   #max(table(col_hist_df$breaks))
+  col_hist_df$breaks <- as.factor(col_hist_df$breaks)
   
-  
+
   colorKey=ggplot()+
-    geom_raster(data=color_df, aes(x = x, y = 1,fill = x), alpha=0.8, show.legend = FALSE, vjust = 0)+
-    scale_fill_manual(values = myColor ,breaks = levels(color_df$x), drop=F)+
+    geom_raster(data=color_df,
+                aes(x = x, y = 1,fill = x),
+                alpha=0.8, show.legend = FALSE,
+                vjust = 0)+
     geom_bar(data = col_hist_df,
-                   aes(x=breaks, y=(..count..)/(max(table(col_hist_df$breaks))+1)),
+             aes(x=breaks, y=(..count..)/(max(table(col_hist_df$breaks))+1)),
                    stat="count",
                    fill=NA,
                    color="black",
                    show.legend = FALSE)+
-    scale_x_discrete(drop=FALSE)+
+    scale_fill_manual(values = myColor,breaks = levels(color_df$x), drop=F)+
+    scale_x_discrete(drop=FALSE,limits = levels(color_df$x))+
     theme_void()
   
   ggsave(filename = gsub(".png","_colorHist.png",givenFilename), plot = colorKey)

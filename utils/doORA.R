@@ -47,6 +47,9 @@ doOra <- function(
       png(paste0(filename,"_ORA","_GO.png"))
       print(clusterProfiler::dotplot(EnrichmentRes_GO_filter_simple))
       dev.off()
+      svg(paste0(filename,"_ORA","_GO.svg"))
+      print(clusterProfiler::dotplot(EnrichmentRes_GO_filter_simple))
+      dev.off()
     }
     
     # add a column to calc cluster gene ration
@@ -82,6 +85,9 @@ doOra <- function(
         print("Kegg nothing enriched - check result object")
       }else{
         png(paste0(filename,"_ORA","_KEGG.png"))
+        print(clusterProfiler::dotplot(EnrichmentRes_Kegg))
+        dev.off()
+        svg(paste0(filename,"_ORA","_KEGG.svg"))
         print(clusterProfiler::dotplot(EnrichmentRes_Kegg))
         dev.off()
       }
@@ -120,6 +126,9 @@ doOra <- function(
         print("Hallmark nothing enriched - check result object")
       }else{
         png(paste0(filename,"_ORA","_HALLMARK.png"))
+        print(dotplot(EnrichmentRes_Hallmarks))
+        dev.off()
+        svg(paste0(filename,"_ORA","_HALLMARK.svg"))
         print(dotplot(EnrichmentRes_Hallmarks))
         dev.off()
       }
