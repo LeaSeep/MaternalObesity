@@ -1,0 +1,51 @@
+ID,Project,Sample,date,Condition,Maternal_diet,Age,Merged
+5819,Maternal obesity,100_CD_CD_CD,0,cdcdcd,Maternal_lean,Adult,cdcdcd_Adult
+5820,Maternal obesity,101_CD_CD_CD,0,cdcdcd,Maternal_lean,Adult,cdcdcd_Adult
+5821,Maternal obesity,200_CD_CD_HFD,0,cdcdhfd,Maternal_lean,Adult,cdcdhfd_Adult
+5822,Maternal obesity,500_HFD_HFD_HFD,0,hfdhfdhfd,Maternal_obese,Adult,hfdhfdhfd_Adult
+5823,Maternal obesity,501_HFD_HFD_HFD,0,hfdhfdhfd,Maternal_obese,Adult,hfdhfdhfd_Adult
+5824,Maternal obesity,103_CD_CD_CD,0,cdcdcd,Maternal_lean,Adult,cdcdcd_Adult
+5825,Maternal obesity,104_CD_CD_CD,0,cdcdcd,Maternal_lean,Adult,cdcdcd_Adult
+5826,Maternal obesity,201_CD_CD_HFD,0,cdcdhfd,Maternal_lean,Adult,cdcdhfd_Adult
+5827,Maternal obesity,202_CD_CD_HFD,0,cdcdhfd,Maternal_lean,Adult,cdcdhfd_Adult
+5828,Maternal obesity,203_CD_CD_HFD,0,cdcdhfd,Maternal_lean,Adult,cdcdhfd_Adult
+5859,Maternal obesity,205_CD_CD_HFD,20180702,cdcdhfd,Maternal_lean,Adult,cdcdhfd_Adult
+5860,Maternal obesity,700_HFD_CD_HFD,20180702,Hfdcdhfd,Maternal_obese,Adult,hfdcdhfd_Adult
+5861,Maternal obesity,701_HFD_CD_HFD,20180702,Hfdcdhfd,Maternal_obese,Adult,hfdcdhfd_Adult
+5862,Maternal obesity,HFD_E14.5_1,20180706,HFD,Maternal_obese,E14_5,HFD_E14_5
+5863,Maternal obesity,HFD_E14.5_2,20180706,HFD,Maternal_obese,E14_5,HFD_E14_5
+5864,Maternal obesity,HFD_E14.5_3,20180706,HFD,Maternal_obese,E14_5,HFD_E14_5
+5865,Maternal obesity,HFD_E14.5_4,20180710,HFD,Maternal_obese,E14_5,HFD_E14_5
+5866,Maternal obesity,HFD_E14.5_5,20180710,HFD,Maternal_obese,E14_5,HFD_E14_5
+5867,Maternal obesity,CD_E14.5_1,20180706,CD,Maternal_lean,E14_5,CD_E14_5
+5868,Maternal obesity,CD_E14.5_2,20180706,CD,Maternal_lean,E14_5,CD_E14_5
+5946,Maternal obesity,702 (HFD-CD-HFD),20180720,hfdcdhfd,Maternal_obese,Adult,hfdcdhfd_Adult
+5947,Maternal obesity,602 (HFD-HFD-CD),20180719,hfdhfdcd,Maternal_obese,Adult,hfdhfdcd_Adult
+5948,Maternal obesity,803 (HFD-CD-CD),20180719,hfdcdcd,Maternal_obese,Adult,hfdcdcd_Adult
+5949,Maternal obesity,802 (HFD-CD-CD),20180719,hfdcdcd,Maternal_obese,Adult,hfdcdcd_Adult
+5950,Maternal obesity,703 (HFD-CD-HFD),20180719,hfdcdhfd,Maternal_obese,Adult,hfdcdhfd_Adult
+5951,Maternal obesity,603 (HFD-HFD-CD),20180720,hfdhfdcd,Maternal_obese,Adult,hfdhfdcd_Adult
+5952,Maternal obesity,604  (HFD-HFD-CD),20180720,hfdhfdcd,Maternal_obese,Adult,hfdhfdcd_Adult
+5953,Maternal obesity,800 (HFD-CD-CD),20180720,hfdcdcd,Maternal_obese,Adult,hfdcdcd_Adult
+5954,Maternal obesity,801  (HFD-CD-CD),20180720,hfdcdcd,Maternal_obese,Adult,hfdcdcd_Adult
+5976,Maternal obesity,CD 83 E14.5_1,20180727,CD,Maternal_lean,E14_5,CD_E14_5
+5977,Maternal obesity,CD 83 E14.5_2,20180727,CD,Maternal_lean,E14_5,CD_E14_5
+5978,Maternal obesity,CD 83 E14.5_3,20180727,CD,Maternal_lean,E14_5,CD_E14_5
+5979,Maternal obesity,503 (HFD-HFD-HFD),20180730,hfdhfdhfd,Maternal_obese,Adult,hfdhfdhfd_Adult
+5980,Maternal obesity,504 (HFD-HFD-HFD),20180730,hfdhfdhfd,Maternal_obese,Adult,hfdhfdhfd_Adult
+5981,Maternal obesity,605 (HFD-HFD-CD),20180730,hfdhfdcd,Maternal_obese,Adult,hfdhfdcd_Adult
+5982,Maternal obesity,606 (HFD-HFD-CD),20180730,hfdhfdcd,Maternal_obese,Adult,hfdhfdcd_Adult
+6019,Maternal obesity,HFD 88 P0_1,20180813,HFD,Maternal_obese,P0,HFD_P0
+6020,Maternal obesity,HFD 88 P0_2,20180813,HFD,Maternal_obese,P0,HFD_P0
+6021,Maternal obesity,HFD 88 P0_3,20180813,HFD,Maternal_obese,P0,HFD_P0
+6022,Maternal obesity,HFD 89 P0_1,20180814,HFD,Maternal_obese,P0,HFD_P0
+6023,Maternal obesity,HFD 89 P0_2,20180814,HFD,Maternal_obese,P0,HFD_P0
+6024,Maternal obesity,206 (CD-CD-HFD),20180817,cdcdhfd,Maternal_lean,Adult,cdcdhfd_Adult
+6025,Maternal obesity,207 (CD-CD-HFD),20180817,cdcdhfd,Maternal_lean,Adult,cdcdhfd_Adult
+6026,Maternal obesity,105 (CD-CD-CD),20180817,cdcdcd,Maternal_lean,Adult,cdcdcd_Adult
+6027,Maternal obesity,106 (CD-CD-CD),20180817,cdcdcd,Maternal_lean,Adult,cdcdcd_Adult
+6028,Maternal obesity,CD 44 P0_1,20180819,CD,Maternal_lean,P0,CD_P0
+6029,Maternal obesity,CD 44 P0_2,20180819,CD,Maternal_lean,P0,CD_P0
+6030,Maternal obesity,CD 44 P0_3,20180819,CD,Maternal_lean,P0,CD_P0
+6031,Maternal obesity,CD 46 P0_1,20180820,CD,Maternal_lean,P0,CD_P0
+6032,Maternal obesity,CD 46 P0_5,20180820,CD,Maternal_lean,P0,CD_P0
