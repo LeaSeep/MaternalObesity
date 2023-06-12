@@ -7,6 +7,9 @@ output:
     toc: yes
     toc_float: yes
     toc_depth: 5
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r Load data, message=FALSE, warning=FALSE, include=FALSE}
@@ -16,6 +19,7 @@ library(SummarizedExperiment)
 # Read in all necassary data to display
 Transcriptome <- readRDS("transcriptome_analysis/Transcriptomics_results.rds")
 Transcriptome_CoCena_KC <- readRDS("transcriptome_analysis/Transcriptomics_ORA_CoCena_results_KC.rds")
+Transcriptome_CoCena_KC_WT <- readRDS("transcriptome_analysis/Transcriptomics_ORA_CoCena_results_KC_WT.rds")
 Transcriptome_CoCena_HC <- readRDS("transcriptome_analysis/Transcriptomics_ORA_CoCena_results_HC.rds")
 
 Metabolome <- readRDS("metabolome_analysis/Metabolomics_results.rds")
@@ -23,39 +27,53 @@ lipidome <- readRDS("lipidome_analysis/Lipidomic_stats_result.rds")
 
 # Read in original Objects for transcriptome for addtional Information
 DESeq_Obj_KC_ko <- readRDS("data/DESeq_Obj_KC.rds")
+DESeq_Obj_KC_wt <- readRDS("data/DESeq_Obj_KC_WT.rds")
 DESeq_Obj_HC_ko <- readRDS("data/DESeq_Obj_HC.rds")
+
 rownames(DESeq_Obj_KC_ko) <- gsub("\\..*","",rownames(DESeq_Obj_KC_ko))
+rownames(DESeq_Obj_KC_wt) <- gsub("\\..*","",rownames(DESeq_Obj_KC_wt))
 rownames(DESeq_Obj_HC_ko) <- gsub("\\..*","",rownames(DESeq_Obj_HC_ko))
 
 ```
 
-## Overview
-This document was created to facilitate an easy look up of the actual data used
-within the publication. All presented tables can be filtered, searched, sorted
-and downloaded in your desired output format.
-We hope that this opens the door for easy data reuse!
-  
-## How to use
-This is a html file and can be open within a browser. 
-You can see on the top left the entire content of the document. If clicking
-on a top potential subcategories will drop out and you can also click on one
-of those to navigate to the section of interest.
-The tables display most often entitie-wise information, always annotated with
-all available information as well. Note that those columns are attached by default 
-to the right of respective table, so you might have to scroll to see those information.
-You can use drag and drop to reorder the columns (Drag the column header!).
+## [Overview]{style="color:#5874a1"}
 
-Each column can be searched by typing into the box just underneath each column
-header. If numerical values are present you can specify to see everything below
-or above a certain threshold. If you click now on your desired table format to
-download that certain selection will be downloaded.
+**THIS MAY TAKE A BIT TO LOAD** This document was created to facilitate
+an easy look up of the actual data used within the publication. All
+presented tables can be filtered, searched, sorted and downloaded in
+your desired output format. We hope that this opens the door for easy
+data reuse!
 
-If you want to download the entire table you need to check if nothing is selected (default).
+## [How to use]{style="color:#5874a1"}
 
-# Results {.tabset}
-## Transcriptomics 
-### DE KC Hif1a
-Results of DE-Analysis, cut down to the top 1000 genes (sorted by unadj. p-value).
+This is a html file and can be open within a browser. You can see on the
+top left the entire content of the document. If clicking on a top
+potential subcategories will drop out and you can also click on one of
+those to navigate to the section of interest. The tables display most
+often entitie-wise information, always annotated with all available
+information as well. Note that those columns are attached by default to
+the right of respective table, so you might have to scroll to see those
+information. You can use drag and drop to reorder the columns (Drag the
+column header!).
+
+Each column can be searched by typing into the box just underneath each
+column header. If numerical values are present you can specify to see
+everything below or above a certain threshold. If you click now on your
+desired table format to download that certain selection will be
+downloaded.
+
+If you want to download the entire table you need to check if nothing is
+selected (default).
+
+# [Results]{style="color:#000000"}
+
+## [Transcriptomics]{style="color:#5874a1"}
+
+### [DE KC Hif1a]{style="color:#f26c05"}
+
+Results of DE-Analysis, cut down to the top 1000 genes (sorted by unadj.
+p-value).
+
 ```{r DE KC Hif1a, echo=FALSE}
 Transcriptome$dds_KC$GeneID <- rownames(Transcriptome$dds_KC)
 rownames(Transcriptome$dds_KC) <- Transcriptome$dds_KC$GeneID
@@ -88,14 +106,18 @@ DT::datatable(
   class = "display"
 )
 ```
-#### ORA results
+
+#### [ORA results]{style="color:#f26c05"}
+
 ```{r echo=FALSE}
 UP <- Transcriptome$ORA_KC$UP
 DOWN <- Transcriptome$ORA_KC$UP
 ```
 
-##### KEGG
-###### UP
+##### [KEGG]{style="color:#f26c05"}
+
+###### [UP]{style="color:#cc713f"}
+
 ```{r echo=FALSE}
 data2show <- as.data.frame(UP$KEGG)
 DT::datatable(
@@ -115,7 +137,8 @@ DT::datatable(
   class = "display"
 )
 ```
-###### DOWN
+
+###### [DOWN]{style="color:#cc713f"}
 
 ```{r echo=FALSE}
 data2show <- as.data.frame(DOWN$KEGG)
@@ -136,8 +159,11 @@ DT::datatable(
   class = "display"
 )
 ```
-##### GO
-###### Up
+
+##### [GO]{style="color:#f26c05"}
+
+###### [Up]{style="color:#cc713f"}
+
 ```{r echo=FALSE}
 data2show <- as.data.frame(UP$KEGG)
 DT::datatable(
@@ -157,7 +183,9 @@ DT::datatable(
   class = "display"
 )
 ```
-###### Down
+
+###### [Down]{style="color:#cc713f"}
+
 ```{r echo=FALSE}
 data2show <- as.data.frame(DOWN$KEGG)
 DT::datatable(
@@ -177,8 +205,11 @@ DT::datatable(
   class = "display"
 )
 ```
-##### HALLMARK
-###### UP
+
+##### [HALLMARK]{style="color:#f26c05"}
+
+###### [UP]{style="color:#cc713f"}
+
 ```{r echo=FALSE}
 data2show <- as.data.frame(UP$HALLMARK)
 DT::datatable(
@@ -198,7 +229,9 @@ DT::datatable(
   class = "display"
 )
 ```
-###### DOWN
+
+###### [DOWN]{style="color:#cc713f"}
+
 ```{r echo=FALSE}
 data2show <- as.data.frame(DOWN$HALLMARK)
 DT::datatable(
@@ -219,7 +252,46 @@ DT::datatable(
 )
 ```
 
-### DE HC Hif1a
+### [DE KC WT]{style="color:#f26c05"}
+
+Results of DE-Analysis, cut down to the top 1000 genes (sorted by unadj.
+p-value).
+
+```{r DE KC WT, echo=FALSE}
+Transcriptome$dds_KC_WT$GeneID <- rownames(Transcriptome$dds_KC_WT)
+rownames(Transcriptome$dds_KC_WT) <- Transcriptome$dds_KC_WT$GeneID
+Transcriptome$dds_KC_WT$GeneID <- NULL
+res <- as.data.frame(Transcriptome$dds_KC_WT)
+
+add_data <- rowData(DESeq_Obj_KC_wt)
+
+data2show <- cbind(
+  res,
+  add_data[rownames(res),c("SYMBOL","GENETYPE")]
+  )
+
+data2show <- data2show[order(data2show$pvalue)[1:1000],]
+
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+
+### [DE HC Hif1a]{style="color:#f26c05"}
+
 ```{r DE HC Hif1a, echo=FALSE}
 Transcriptome$dds_HC$GeneID <- rownames(Transcriptome$dds_HC)
 rownames(Transcriptome$dds_HC) <- Transcriptome$dds_HC$GeneID
@@ -253,13 +325,17 @@ DT::datatable(
 )
 ```
 
-#### ORA results
+#### [ORA results]{style="color:#f26c05"}
+
 ```{r echo=FALSE}
 UP <- Transcriptome$ORA_HC$UP
 DOWN <- Transcriptome$ORA_HC$UP
 ```
-##### KEGG
-###### UP
+
+##### [KEGG]{style="color:#f26c05"}
+
+###### [UP]{style="color:#cc713f"}
+
 ```{r echo=FALSE}
 data2show <- as.data.frame(UP$KEGG)
 DT::datatable(
@@ -279,7 +355,8 @@ DT::datatable(
   class = "display"
 )
 ```
-###### DOWN
+
+###### [DOWN]{style="color:#cc713f"}
 
 ```{r echo=FALSE}
 data2show <- as.data.frame(DOWN$KEGG)
@@ -300,8 +377,11 @@ DT::datatable(
   class = "display"
 )
 ```
-##### GO
-###### Up
+
+##### [GO]{style="color:#f26c05"}
+
+###### [Up]{style="color:#cc713f"}
+
 ```{r echo=FALSE}
 data2show <- as.data.frame(UP$KEGG)
 DT::datatable(
@@ -321,7 +401,9 @@ DT::datatable(
   class = "display"
 )
 ```
-###### Down
+
+###### [Down]{style="color:#cc713f"}
+
 ```{r echo=FALSE}
 data2show <- as.data.frame(DOWN$KEGG)
 DT::datatable(
@@ -341,8 +423,11 @@ DT::datatable(
   class = "display"
 )
 ```
-##### HALLMARK
-###### UP
+
+##### [HALLMARK]{style="color:#f26c05"}
+
+###### [UP]{style="color:#cc713f"}
+
 ```{r echo=FALSE}
 data2show <- as.data.frame(UP$HALLMARK)
 DT::datatable(
@@ -362,7 +447,9 @@ DT::datatable(
   class = "display"
 )
 ```
-###### DOWN
+
+###### [DOWN]{style="color:#cc713f"}
+
 ```{r echo=FALSE}
 data2show <- as.data.frame(DOWN$HALLMARK)
 DT::datatable(
@@ -383,23 +470,123 @@ DT::datatable(
 )
 ```
 
+### [hCoCena]{style="color:#f26c05"}
 
-### hCoCena
-#### KC wt
+#### [KC wt]{style="color:#f26c05"}
+
 Cluster Sets & ORA
 
-#### KC Hif1a
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+counter = 0
+# reorder names to have gene sets first
+
+
+for(i in names(Transcriptome_CoCena_KC_WT)){
+  for(j in rev(names(Transcriptome_CoCena_KC_WT[[i]]))){
+     counter = counter + 1
+     
+    if(j == "GeneSet"){      
+      data2show <- clusterProfiler::bitr(Transcriptome_CoCena_KC_WT[[i]][[j]],
+                               fromType="ENSEMBL",
+                               toType="SYMBOL",
+                               OrgDb="org.Mm.eg.db")
+      customCaption = paste0("Table ",counter,": Cluster: ",i," - complete cluster set")
+      
+      print(htmltools::tagList(
+        DT::datatable(
+          data2show,
+           caption = customCaption,
+          extensions = c('Buttons','ColReorder'),
+          filter = 'top',
+          options = list(
+            pageLength = 5,
+            paging = TRUE,
+            searching = TRUE,
+            fixedColumns = TRUE,
+            colReorder = TRUE,
+            autoWidth = TRUE,
+            ordering = TRUE,
+            dom = 'Bfrtip',
+            buttons = c('copy', 'csv', 'excel')
+        ),
+        class = "display"
+        )))
+      next
+      }
+    
+   
+    data2show <- Transcriptome_CoCena_KC_WT[[i]][[j]]
+    
+    if(j != "GO"){
+      # need to split up the genes, translate and paste again
+        data2show$geneID_SYMBOL <- unlist(lapply(strsplit(data2show$geneID,split="/"),function(x){
+           tmp <- clusterProfiler::bitr(x,
+                                   fromType="ENTREZID",
+                                   toType="SYMBOL",
+                                   OrgDb="org.Mm.eg.db")$SYMBOL
+           
+           paste0(tmp, collapse = "/")
+        }))
+    }
+    
+      customCaption = paste0("Table ",counter,": Cluster: ",i," ",j," enrichment results")
+      
+      print(htmltools::tagList(
+        DT::datatable(
+          data2show,
+           caption = customCaption,
+          extensions = c('Buttons','ColReorder'),
+          filter = 'top',
+          options = list(
+            pageLength = 5,
+            paging = TRUE,
+            searching = TRUE,
+            fixedColumns = TRUE,
+            colReorder = TRUE,
+            autoWidth = TRUE,
+            ordering = TRUE,
+            dom = 'Bfrtip',
+            buttons = c('copy', 'csv', 'excel')
+        ),
+        class = "display"
+      )  %>% formatStyle(
+          'p.adjust',
+          target = 'row',
+          backgroundColor = styleInterval(c(0.05), c('lightblue','white'))
+        )
+      
+      )
+      )
+  }
+}
+
+```
+
+#### [KC Hif1a]{style="color:#f26c05"}
+
 Cluster Sets & ORA
 
-```{r echo=FALSE,results='asis'}
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 counter = 0
 
 #htmltools::tagList(datatable(matrix()))
 for(i in names(Transcriptome_CoCena_KC)){
-  for(j in names(Transcriptome_CoCena_KC[[i]])){
+  for(j in rev(names(Transcriptome_CoCena_KC[[i]]))){
+    if(j == "GeneSet"){next}
     counter = counter + 1
       data2show <- Transcriptome_CoCena_KC[[i]][[j]]
       
+      if(j != "GO"){
+      # need to split up the genes, translate and paste again
+      data2show$geneID_SYMBOL <- unlist(lapply(strsplit(data2show$geneID,split="/"),function(x){
+        tmp <- clusterProfiler::bitr(x,
+                               fromType="ENTREZID",
+                               toType="SYMBOL",
+                               OrgDb="org.Mm.eg.db")$SYMBOL
+         paste0(tmp, collapse = "/")
+      }))
+      }
+      
       customCaption = paste0("Table ",counter,": Cluster: ",i," ",j," enrichment results")
       
       print(htmltools::tagList(
@@ -420,23 +607,72 @@ for(i in names(Transcriptome_CoCena_KC)){
             buttons = c('copy', 'csv', 'excel')
         ),
         class = "display"
-      ))
+      ) %>% formatStyle(
+          'p.adjust',
+          target = 'row',
+          backgroundColor = styleInterval(c(0.05), c('lightblue','white'))
+        )
+      
+      )
       )
   }
 }
 
 ```
 
-#### HC Hif1a
+#### [HC Hif1a]{style="color:#f26c05"}
+
 Cluster Sets & ORA
-```{r echo=FALSE,results='asis'}
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 counter = 0
 #htmltools::tagList(datatable(matrix()))
 for(i in names(Transcriptome_CoCena_HC)){
-  for(j in names(Transcriptome_CoCena_HC[[i]])){
+  for(j in rev(names(Transcriptome_CoCena_HC[[i]]))){
     counter = counter + 1
+    if(j == "GeneSet"){
+      data2show <- clusterProfiler::bitr(Transcriptome_CoCena_HC[[i]][[j]],
+                               fromType="ENSEMBL",
+                               toType="SYMBOL",
+                               OrgDb="org.Mm.eg.db")
+      customCaption = paste0("Table ",counter,": Cluster: ",i," - complete cluster set")
+      
+      print(htmltools::tagList(
+        DT::datatable(
+          data2show,
+           caption = customCaption,
+          extensions = c('Buttons','ColReorder'),
+          filter = 'top',
+          options = list(
+            pageLength = 5,
+            paging = TRUE,
+            searching = TRUE,
+            fixedColumns = TRUE,
+            colReorder = TRUE,
+            autoWidth = TRUE,
+            ordering = TRUE,
+            dom = 'Bfrtip',
+            buttons = c('copy', 'csv', 'excel')
+        ),
+        class = "display"
+      ) 
+      )
+      )
+      
+    }else{
+      
       data2show <- Transcriptome_CoCena_HC[[i]][[j]]
       
+      if(j != "GO"){
+      # need to split up the genes, translate and paste again
+      data2show$geneID_SYMBOL <- unlist(lapply(strsplit(data2show$geneID,split="/"),function(x){
+        tmp <- clusterProfiler::bitr(x,
+                               fromType="ENTREZID",
+                               toType="SYMBOL",
+                               OrgDb="org.Mm.eg.db")$SYMBOL
+         paste0(tmp, collapse = "/")
+      }))
+      }
       customCaption = paste0("Table ",counter,": Cluster: ",i," ",j," enrichment results")
       
       print(htmltools::tagList(
@@ -459,16 +695,20 @@ for(i in names(Transcriptome_CoCena_HC)){
         class = "display"
       ))
       )
+    }
+    
   }
 }
 
 ```
 
+## [Metabolomics]{style="color:#5874a1"}
 
-## Metabolomics
-### ANOVA results ko HFD CD CD vs wt HFD CD CD
+### [ANOVA results]{style="color:#f26c05"}
 
-```{r echo=FALSE}
+Chosen Comparison: ko HFD CD CD vs wt HFD CD CD
+
+```{r echo=FALSE,results='asis'}
 data2show <- Metabolome$ANOVA_HFDCDCD_vs_CDCDCD
 data2show <- data2show[,!grepl("^FS",colnames(data2show))]
 data2show <- as.data.frame(data2show)
@@ -490,12 +730,14 @@ DT::datatable(
 )
 ```
 
+### [Metabridge Output]{style="color:#f26c05"}
 
-### Metabridge Output
+## [Lipidomics]{style="color:#5874a1"}
 
-## Lipidomics
-### wild type 
-#### LFC per class
+### [wild type]{style="color:#f26c05"}
+
+#### [LFC per class]{style="color:#f26c05"}
+
 ```{r echo=FALSE}
 data2show <- as.data.frame(lipidome$Lipidomics_wt$LFC_Values)
 DT::datatable(
@@ -515,7 +757,9 @@ DT::datatable(
   class = "display"
 )
 ```
-#### p-Values  per class
+
+#### [p-Values per class]{style="color:#f26c05"}
+
 ```{r echo=FALSE}
 data2show <- as.data.frame(lipidome$Lipidomics_wt$stat_res_pVal)
 DT::datatable(
@@ -535,8 +779,11 @@ DT::datatable(
   class = "display"
 )
 ```
-### knock out
-#### LFC per class
+
+### [knock out]{style="color:#f26c05"}
+
+#### [LFC per class]{style="color:#f26c05"}
+
 ```{r echo=FALSE}
 data2show <- as.data.frame(lipidome$Lipidomics_ko$LFC_Values)
 DT::datatable(
@@ -556,7 +803,9 @@ DT::datatable(
   class = "display"
 )
 ```
-#### p-Values  per class
+
+#### [p-Values per class]{style="color:#f26c05"}
+
 ```{r echo=FALSE}
 data2show <- as.data.frame(lipidome$Lipidomics_ko$stat_res_pVal)
 DT::datatable(
