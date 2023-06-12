@@ -69,7 +69,7 @@ rownames(dds_KC) <- gsub("\\..*","",rownames(dds_KC))
 rownames(dds_KC) <- gsub("\\..*","",rownames(dds_KC))
 
 # Note there where to outliers removed namely IDs ("12553","12555") due to their
-# outlier-behaviour (check out PCA if not removed), 12568 was removed as their
+# outlier-behaviour (check out PCA if not removed), 12569 was removed as their
 # was a miss-specification of the genotype and origin of the sample is not a 100%
 # clear (most likely ko)
 
@@ -77,7 +77,8 @@ removeOutliers <- T
 
 if(removeOutliers){
 dds_KC <- dds_KC[,-c(
-    which(colnames(dds_KC) %in% c("12553","12555","12558","12557"))#,"12569"))
+    #which(colnames(dds_KC) %in% c("12553","12555","12558","12557"))#,"12569"))
+    which(colnames(dds_KC) %in% c("12553","12555","12569"))#,"12569"))
     )]
 }
 
@@ -198,7 +199,12 @@ ggsave(filename = paste0("HC_PCA_",Sys.Date(),".svg"), plot=HC_PCA)
 
 # ORA - Analysis ----
 #Universe HC
-universe_entrez <- bitr(rownames(res_HC),
+universe_entrez_HC <- bitr(rownames(res_HC),
+                        fromType="ENSEMBL",
+                        toType="ENTREZID",
+                        OrgDb="org.Mm.eg.db")$ENTREZID
+#Universe KC
+universe_entrez_KC <- bitr(rownames(res_KC),
                         fromType="ENSEMBL",
                         toType="ENTREZID",
                         OrgDb="org.Mm.eg.db")$ENTREZID
@@ -207,7 +213,7 @@ HC_ORA_UP <- doOra(
   rownames(res_HC[which(res_HC$log2FoldChange>0 & res_HC$padj <0.1),]), # ENSEBML
   type=c("KEGG","GO","HALLMARK"),
   levelGOTerms=4,
-  universe_entrez,
+  universe_entrez_HC,
   filename = "ORA_DE/HC_UP" # will be ORA_[filename][type].png
   )
 
@@ -215,7 +221,7 @@ HC_ORA_DOWN <- doOra(
   rownames(res_HC[which(res_HC$log2FoldChange<0 & res_HC$padj <0.1),]), # ENSEBML
   type=c("KEGG","GO","HALLMARK"),
   levelGOTerms=4,
-  universe_entrez,
+  universe_entrez_HC,
   filename = "ORA_DE/HC_DOWN"
 )
 
@@ -223,14 +229,14 @@ KC_ORA_UP <- doOra(
   rownames(res_KC[which(res_KC$log2FoldChange>0 & res_KC$padj <0.1),]), # ENSEBML
   type=c("KEGG","GO","HALLMARK"),
   levelGOTerms=4,
-  universe_entrez,
+  universe_entrez_KC,
   filename = "ORA_DE/KC_UP"
 )
 KC_ORA_DOWN <- doOra(
   rownames(res_KC[which(res_KC$log2FoldChange<0 & res_KC$padj <0.1),]), # ENSEBML
   type=c("KEGG","GO","HALLMARK"),
-  levelGOTerms=6,
-  universe_entrez,
+  levelGOTerms=4,
+  universe_entrez_KC,
   filename = "ORA_DE/KC_DOWN"
 )
 
@@ -251,6 +257,14 @@ DE_LigandReceptor <- doLigandReceptorPlot(
   colorVar = "log2FoldChange",
   adjMatrix_LigandReceptor = lr_mouse_table
   )
+allLigands <- as.character(unique(lr_mouse_table$ligand_gene_id))
+HC_ORA_UP <- doOra(
+  unique(DE_LigandReceptor$ligand_ensembl_gene_id[which(DE_LigandReceptor$LFC_noTrim<0)]), # ENSEBML
+  type=c("GO"),
+  levelGOTerms=6,
+  allLigands,
+  filename = "ORA_DE/Ligand_Set" # will be ORA_[filename][type].png
+)
 
 # CoCena ----
 ## HC Co-expression analysis ----
@@ -258,12 +272,6 @@ DE_LigandReceptor <- doLigandReceptorPlot(
 # main and satellite showcase Notebooks
 # The Input is generated in here and saved to data folder
 
-# Note we apply an additional filter step, to remove low count genes accross
-# all samples, precisely everything is kept, that
-# as in 25% of samples >10 counts
-
-#keep <- rowSums(counts(dds_HC) >= 10) >= ceiling(0.25*ncol(dds_HC))
-#dds_HC_coCena <- dds_HC[keep,]
 CoCena_Input_HC <- DESeq(dds_HC)
 
 saveRDS(CoCena_Input_HC,"../data/CoCena_Input_HC.rds")
