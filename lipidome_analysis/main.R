@@ -94,8 +94,10 @@ results_wt <- doSigLFCHeatmap(
   LFC_between = "diet", # column of sampleAnno
   FC_ctrl = "CD_CD_CD", # one level from colum selected in 'LFC_between',
   givenFilename = paste0("pics/","Heatmap_wt_",Sys.Date(),".png"),
-  subset = c("TACG_unsat","TACG_sat","DAG", "CE", "MAG"), # put to NULL to get entire Heatmap
-  colorTheme = colorTheme # needs to be named
+  #subset = c("TACG_unsat","TACG_sat","DAG", "CE", "MAG"), # put to NULL to get entire Heatmap
+  subset = NULL,
+  colorTheme = colorTheme, # needs to be named
+  transposed=F
 )
 
 output_result_list[["Lipidomics_wt"]] <- results_wt
@@ -181,7 +183,9 @@ results_ko <- doSigLFCHeatmap(
   FC_ctrl = "CDCDCD_wt", # one level from colum selected in 'LFC_between',
   givenFilename = paste0("pics/","Heatmap_ko_",Sys.Date(),".png"),
   subset = c("TACG_unsat","TACG_sat","DAG", "CE", "MAG"), # put to NULL to get entire Heatmap
-  colorTheme = colorTheme # needs to be named
+  #subset = NULL,
+  colorTheme = colorTheme, # needs to be named,
+  transposed = T
 )
 
 

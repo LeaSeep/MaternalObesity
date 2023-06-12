@@ -21,6 +21,7 @@ source("../utils/readMetabolon.R")
 source("../utils/doComBat.R")
 source("../utils/doPCA.R")
 source("../utils/getUniqueKEGG.R")
+source("../utils/doANOVA_contrast.R")
 
 output_result_list <- list()
 
@@ -87,6 +88,7 @@ pca_plot <- doPCA(correctedObj,
 )
 
 ggsave(filename = paste0("PCA_",Sys.Date(),".png"), plot=pca_plot)
+ggsave(filename = paste0("PCA_",Sys.Date(),".svg"), plot=pca_plot)
 
 # Save everything ----
 saveRDS(output_result_list, file = "Metabolomics_results.rds")
