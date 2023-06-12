@@ -730,7 +730,6 @@ DT::datatable(
 )
 ```
 
-### [Metabridge Output]{style="color:#f26c05"}
 
 ## [Lipidomics]{style="color:#5874a1"}
 
