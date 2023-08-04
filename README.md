@@ -1,6 +1,6 @@
 # Project Description
 This is the repository to redo all analysis done within the Maternal Obesity project.
-(Manuscript Link will be added as soon as posssible).
+(Manuscript Link will be added as soon as possible).
 If you want to:
 ... redo the analysis for one omic type, please go to the respective subdirectory and execute the `main.R` script [More Infos]
 ... check results tables regarding each Omic (DE analysis, ORA-analysis, CoCena) please checkout `Database.html`[More Infos]
@@ -31,9 +31,9 @@ To execute all, in RStudio, there should appear in the top left corner of the Ed
 # Data Overview
 ## Data Repositories
 The raw data with their respective Metadata can be found under the following addresses:
-- Transcriptomics:
-- Lipidomics:
-- Metabolomics:
+- Transcriptomics: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE237408
+- Lipidomics: http://dx.doi.org/10.21228/M81D9R
+- Metabolomics: http://dx.doi.org/10.21228/M81D9R
 
 ## Processed Data
 All data needed to run the analysis can be found in the `data` directory. Note, this might not necassarily be the raw data.
