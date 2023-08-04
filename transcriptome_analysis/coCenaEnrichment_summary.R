@@ -1,4 +1,5 @@
 ## create expert knowledge dot-plot based on ORA results
+# Requires an xlsx sheet of the selected terms (can be found in data folder)
 setwd("transcriptome_analysis")
 library(clusterProfiler)
 ORA_all_results <- readRDS("Transcriptomics_ORA_CoCena_results_KC_WT.rds")
@@ -15,11 +16,12 @@ for(i in names(ORA_all_results)){
   
   if(any(grepl(c("KEGG"),selectedTerms_cluster$Term))){
     data_tmp=ORA_all_results[[i]]$KEGG
+
     data_term <- rbind(data_term,
-                   data_tmp[data_tmp$Description%in%selectedTerms_cluster$Term,])
+                   data_tmp[data_tmp$Description%in%toupper(selectedTerms_cluster$Term),])
   }
   if(any(grepl(c("GO"),selectedTerms_cluster$Term))){
-    terms_selected_tmp <- trimws(gsub("GO ","",selectedTerms_cluster$Term))
+    terms_selected_tmp <- trimws(gsub("GO_","",selectedTerms_cluster$Term))
     data_tmp=ORA_all_results[[i]]$GO
     data_term <- rbind(data_term,
                    data_tmp[data_tmp$Description%in%terms_selected_tmp,])
@@ -31,7 +33,7 @@ for(i in names(ORA_all_results)){
   }
   data_term$type <- i
   selectedTerms[[i]] <- data_term
-  print(colnames(data_term))
+
 }
 
 data <- rlist::list.rbind(selectedTerms)
@@ -46,7 +48,7 @@ for(i in 1:nrow(data)){
   data[i,"roundedGeneRatio"] <- round(tmp[1]/tmp[2],2)
 }
 
-data$type<-factor(data$type, levels = c("gold","plum","steelblue","lightgreen","turquoise","maroon"),ordered = T)
+data$type<-factor(data$type, levels = c("plum","steelblue","gold","turquoise","lightgreen" ),ordered = T)
 data$Description <- gsub("_"," ",data$Description)
 
 ggplot_v1<-

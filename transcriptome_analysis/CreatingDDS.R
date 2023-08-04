@@ -1,9 +1,10 @@
 # Creating DDS object based on kallisto files
-# can be downloaded from                         GEO ACCESSSION !!!!
+# can be downloaded from repository - see manuscript for details
 # the results are saved in the data/ folder
+
 source("../utils/doKallisto2dds.R")
 
-if(gsub("^.+/","",getwd())!="transcriptome_analysis"){
+if(gsub("^.+/","",getwd()) != "transcriptome_analysis"){
   setwd("transcriptome_analysis")
 }
 
@@ -75,4 +76,53 @@ write.csv(
 write.csv(
   as.data.frame(assay(dds_txi_KC)),
   file = "../data/CountMatrix_KupfferCells_WT_RNASeq_kallistoImport.csv"
+)
+
+
+## young P0 ----
+dir <- "/Users/lea/sciebo/Home/current/projects/Linking Lipid+Trans/data/transcriptomics/rawData/kallisto/"
+sample_table <- read.csv("../data/sampleTable_KupfferCells_WT_RNAseq.csv",row.names = 1)
+sample_table <- subset(sample_table, subset = Age =="P0")
+sample_table$ID <- rownames(sample_table)
+
+dds_txi_KC_P0 <- doKallisto2dds(
+  dir,
+  sample_table,
+  tx_anno_path
+)
+
+saveRDS(dds_txi_KC_P0,"../data/DESeq_Obj_KC_WT_P0.rds")
+
+# Save 3 Files for easy data-access if unfamiliar with DESeq Object
+write.csv(
+  as.data.frame(rowData(dds_txi_KC_P0)),
+  file = "../data/RowAnno_KupfferCells_WT_P0_RNASeq_kallistoImport.csv"
+)
+write.csv(
+  as.data.frame(assay(dds_txi_KC_P0)),
+  file = "../data/CountMatrix_KupfferCells_WT_P0_RNASeq_kallistoImport.csv"
+)
+
+## adolescent E14.5 ----
+dir <- "/Users/lea/sciebo/Home/current/projects/Linking Lipid+Trans/data/transcriptomics/rawData/kallisto/"
+sample_table <- read.csv("../data/sampleTable_KupfferCells_WT_RNAseq.csv",row.names = 1)
+sample_table <- subset(sample_table, subset = Age =="E14_5")
+sample_table$ID <- rownames(sample_table)
+
+dds_txi_KC_E14_5 <- doKallisto2dds(
+  dir,
+  sample_table,
+  tx_anno_path
+)
+
+saveRDS(dds_txi_KC_E14_5,"../data/DESeq_Obj_KC_WT_E14_5.rds")
+
+# Save 3 Files for easy data-access if unfamiliar with DESeq Object
+write.csv(
+  as.data.frame(rowData(dds_txi_KC_E14_5)),
+  file = "../data/RowAnno_KupfferCells_WT_E14_5_RNASeq_kallistoImport.csv"
+)
+write.csv(
+  as.data.frame(assay(dds_txi_KC_E14_5)),
+  file = "../data/CountMatrix_KupfferCells_WT_E14_5_RNASeq_kallistoImport.csv"
 )
