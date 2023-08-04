@@ -3,6 +3,7 @@
 # This script includes the lipidome analysis Kupffer-Cells (KC) in wt and Hif1a ko
 # setting.
 # Including statistical analysis and summarised overview.
+# The script is structured in sections, outline visible on the right
 
 ## Input ----
 # (all in data Folder):
@@ -11,7 +12,6 @@
 #   - Row annotation based on raw data (initial data from sample metadata separated)
 #   - sample Table as provided
 
-
 ## Output----
 # (output to script's folder):
 #   - statistical analysis results for desired comparisons 
@@ -19,6 +19,7 @@
 #   - Heatmap Lipids
 
 # SetUp ----
+
 setwd("lipidome_analysis")
 if(!("pics" %in% list.dirs())){
   dir.create("pics", showWarnings = FALSE)
@@ -31,9 +32,9 @@ source("../utils/doPCA.R")
 output_result_list <- list()
 
 # wild type KC ----
-colorTheme <- c("#606060","#c12c38","#e0775f","#f3b694","#fce2d0")
+colorTheme <- c("#606060","#c32b38","#fee2d1","#8a4094","#ebdeec")
 names(colorTheme) <- c("CD_CD_HFD","HFD_CD_CD",
-                       "HFD_CD_HFD", "HFD_HFD_CD","HFD_HFD_HFD")
+                       "HFD_HFD_CD", "HFD_CD_HFD","HFD_HFD_HFD")
 
 RawData <- read.csv("../data/DataMatrix_wtLipidomics_2023_01_30.csv",row.names = 1)
 RowAnno <- read.csv("../data/RowAnno_wtLipidomics_2023_01_30.csv",row.names = 1)
@@ -46,7 +47,7 @@ sampleAnno$MaternalDiet[grepl("^CD",sampleAnno$diet)] <- "MaternalLean"
 sampleAnno$diet <- factor(
   sampleAnno$diet, 
   levels = c("CD_CD_CD","CD_CD_HFD","HFD_CD_CD",
-             "HFD_CD_HFD","HFD_HFD_CD","HFD_HFD_HFD"), 
+             "HFD_HFD_CD","HFD_CD_HFD","HFD_HFD_HFD"), 
   ordered = F)
 
 Lipid_SumExp <- SummarizedExperiment(
@@ -54,7 +55,6 @@ Lipid_SumExp <- SummarizedExperiment(
   rowData = RowAnno,
   colData = sampleAnno
   )
-
 
 
 # remove anything constant
@@ -107,8 +107,13 @@ output_result_list[["Lipidomics_wt"]] <- results_wt
 Lipid_SumExp_log2 <- Lipid_SumExp
 # remove anything 
 
-colorTheme <- c("#c6c6c6","#606060","#c12c38","#e0775f","#f3b694","#fce2d0")
+colorTheme <- c("#c6c6c6","#606060","#c32b38","#fee2d1","#8a4094","#ebdeec")
 assay(Lipid_SumExp_log2) <- log2(assay(Lipid_SumExp_log2)+1)
+Lipid_SumExp_log2$diet <- factor(
+  Lipid_SumExp_log2$diet, 
+  levels = c("CD_CD_CD","CD_CD_HFD","HFD_CD_CD",
+             "HFD_HFD_CD","HFD_CD_HFD","HFD_HFD_HFD"), 
+  ordered = T)
 
 WT_PCA <- doPCA(
   Lipid_SumExp_log2,
@@ -146,6 +151,14 @@ Lipid_SumExp_ko <- SummarizedExperiment(
   colData = sampleAnno
 )
 
+removeOutliers <- T
+# removed due to observation of separation within similarity analysis
+# clearly another factor determines levels which is not present within the other group members
+if(removeOutliers){
+  Lipid_SumExp_ko <- Lipid_SumExp_ko[,-c(
+    which(colnames(Lipid_SumExp_ko) %in% c("HFDCDCD_wt_41","HFDHFDHFD_wt_1"))
+  )]
+}
 
 # remove anything constant
 Lipid_SumExp_ko <- Lipid_SumExp_ko[which(apply(as.data.frame(assay(Lipid_SumExp_ko)),1,sd)!=0),]
@@ -154,7 +167,7 @@ Lipid_SumExp_ko <- Lipid_SumExp_ko[which(apply(as.data.frame(assay(Lipid_SumExp_
 rowData(Lipid_SumExp_ko)$CLASS_2 <- gsub("\\(.*$","",rownames(Lipid_SumExp_ko))
 rowData(Lipid_SumExp_ko)[grepl("TAG",rowData(Lipid_SumExp_ko)$CLASS_2),"CLASS_2"] <- rowData(Lipid_SumExp_ko)[grepl("TAG",rowData(Lipid_SumExp_ko)$CLASS_2),"CLASS"]
 
-output_result_list[["Lipid_SumExp_ko"]] <- Lipid_SumExp
+output_result_list[["Lipid_SumExp_ko"]] <- Lipid_SumExp_ko
 
 ## Statistical Analysis  & Heatmap ----
 # Take out all TAGODD
@@ -173,6 +186,7 @@ print(paste0(
   nrow(old)-nrow(new),
   " mets, out of ",nrow(old),")"
 ))
+
 
 results_ko <- doSigLFCHeatmap(
   as.data.frame(assay(Lipid_SumExp_subset)),
@@ -204,7 +218,7 @@ colData(Lipid_SumExp_log2)$merged <- factor(
 colorTheme <- c("#a6cee3","#1f78b4","#b2df8a","#33a02c", 
                 "#fdbf6f","#ff7f00","#fb9a99","#e31a1c")
 assay(Lipid_SumExp_log2) <- log2(assay(Lipid_SumExp_log2)+1)
-
+Lipid_SumExp_log2$ID <- colnames(Lipid_SumExp_log2)
 KO_PCA <- doPCA(
   Lipid_SumExp_log2,
   colorTheme = colorTheme,

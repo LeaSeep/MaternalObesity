@@ -253,7 +253,7 @@ DT::datatable(
 ```
 
 ### [DE KC WT]{style="color:#f26c05"}
-
+#### [adult]{style="color:#f26c05"}
 Results of DE-Analysis, cut down to the top 1000 genes (sorted by unadj.
 p-value).
 
@@ -272,6 +272,59 @@ data2show <- cbind(
 
 data2show <- data2show[order(data2show$pvalue)[1:1000],]
 
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+
+#### [P0]
+##### [ORA results]{style="color:#f26c05"}
+
+```{r echo=FALSE}
+UP <- Transcriptome$ORA_KC_WT_P0$UP
+DOWN <- Transcriptome$ORA_KC_WT_P0$DOWN
+```
+
+##### [HALLMARK]{style="color:#f26c05"}
+
+###### [UP]{style="color:#cc713f"}
+
+```{r echo=FALSE}
+data2show <- as.data.frame(UP$HALLMARK)
+DT::datatable(
+  data2show,
+  extensions = c('Buttons','ColReorder'),
+  filter = 'top',
+  options = list(
+    paging = TRUE,
+    searching = TRUE,
+    fixedColumns = TRUE,
+    colReorder = TRUE,
+    autoWidth = TRUE,
+    ordering = TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  class = "display"
+)
+```
+###### [DOWN]{style="color:#cc713f"}
+
+```{r echo=FALSE}
+data2show <- as.data.frame(UP$HALLMARK)
 DT::datatable(
   data2show,
   extensions = c('Buttons','ColReorder'),
