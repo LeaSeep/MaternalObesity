@@ -3,6 +3,7 @@
 # This script includes the metabolome analysis of the serum of wt mice fed with
 # different schemes (see manuscript). 
 # Including Batch correction, statistical analysis and prep for Metaboanalyst.
+# Overview of analysis can be found on the right (when in RStudio)
 
 ## Input ----
 # (all in data Folder):
@@ -13,7 +14,8 @@
 # (output to script's folder):
 #   - ANOVA results for desired comparisons
 #   - Visualisation of Batch corrected Data
-#   - Metabolites to Metabridge
+#   - PCA analysis
+
 
 # SetUp ----
 setwd("metabolome_analysis/")
@@ -25,7 +27,7 @@ source("../utils/doANOVA_contrast.R")
 
 output_result_list <- list()
 
-colorTheme <- c("#c6c6c6","#606060","#c12c38","#e0775f","#f3b694","#fce2d0")
+colorTheme <- c("#c6c6c6","#606060","#c32b38","#fee2d1","#8a4094","#ebdeec")
 
 filename <- "../data/Metabolon_UHBO-06-21MD_DATA TABLES_extMetadata.xlsx"
 checkObj <- readInMetabolon(
@@ -48,15 +50,6 @@ ANOVA_contrast_HFDCDCD_CDCDCD <- doANovaContrast(
   )
 output_result_list[["ANOVA_HFDCDCD_vs_CDCDCD"]] <- ANOVA_contrast_HFDCDCD_CDCDCD
 
-### Metaboanalyst Prep ----
-# This are all metabolites where KEGG Id was provided 
-# all Metabolites for which multiple IDs the first one is selected
-# Metaboanalyst requests KEGGs as universe 
-
-UniverseDF <- as.data.frame(rowData(checkObj))
-UniverseKEGG <- getUnique(UniverseDF,col="KEGG")
-
-write(UniverseKEGG,file = "KEGG_universe_for_Metabolyst.csv")
 
 ## create LookUP data set ----
 # Get all significant Metabolites fo specified contrast (unadj. pVals)
@@ -78,6 +71,14 @@ correctedObj <- doBatchCorrection(
   )
 
 # PCA ----
+correctedObj$GROUP_NAME <- factor(correctedObj$GROUP_NAME,
+                                  levels = c("CD CD CD",
+                                             "CD CD HFD",
+                                             "HFD CD CD",
+                                             "HFD HFD CD",
+                                             "HFD CD HFD",
+                                             "HFD HFD HFD"),
+                                  ordered = T)
 
 pca_plot <- doPCA(correctedObj,
       colorTheme,
