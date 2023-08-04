@@ -8,7 +8,7 @@ pdf_document: default
 ---
   
 # Introduction
-This Markdown contains the base workflow of hcocena. For a fully functional analysis, these steps are mandatory unless declared otherwise (flagged with OPTIONAL). Feel free to expand upon this base analysis with the provided satellite functions or your custom scripts. You will find detailed information on the satellite functions as well as intermediate outputs that you can use for your custom analyses in the repository's Wiki.
+This Markdown contains the base workflow of hCoCena. You will find detailed information on the satellite functions as well as intermediate outputs that you can use for your custom analyses in the repository's Wiki.
 
 # Pre-Integration Phase
 
@@ -17,7 +17,6 @@ This Markdown contains the base workflow of hcocena. For a fully functional anal
 library(hcocena)
 library(SummarizedExperiment)
 ```
-
 
 ## create hCoCena-Object
 
@@ -125,7 +124,7 @@ hcocena::suggest_topvar()
 
 ```{r layer-specific settings}
 
-set_layer_settings(top_var = 5000,
+set_layer_settings(top_var = 4000,
                    min_corr = rep(0.60, length(hcobject[["layers"]])), 
                    range_cutoff_length = rep(100, length(hcobject[["layers"]])),
                    print_distribution_plots = rep(F, length(hcobject[["layers"]])))
@@ -158,13 +157,7 @@ plot_cutoffs(interactive = T)
 
 ```
   
-  
-  The order in which the cutoffs are subsequently defined must correspond to the order in which the layers have previously been specified.
-  LS: Strategy used to choose threshold: 
-  1 - check No of DE-Genes  (1124)
-  2 - determine range of +-20% [1349 - 899]
-  3 - within determined range select highest Rsquared ( here 0.85)
-  
+The correlation cutoff was set for all CoCena analysis the same aiming for a connected network with high correlated edges.
 
 ```{r choose cutoff}
 set_cutoff(cutoff_vector = c(0.7))
@@ -226,6 +219,13 @@ In this step, modules of strong co-expression will be detected in the network an
 res=cluster_calculation(cluster_algo = "cluster_leiden",no_of_iterations = 100, max_cluster_count_per_gene = 3) # 1000
 #col_anno_categorical(variables = NULL, variable_label = NULL) 
 #col_anno_categorical(variables = c("Maternal_diet"), variable_label = "Maternal_diet") 
+annotation_seq$Merged <- factor(annotation_seq$Merged,levels = 
+                                  c("cdcdcd_Adult",
+                                    "cdcdhfd_Adult",
+                                    "hfdcdcd_Adult",
+                                    "hfdhfdcd_Adult",
+                                    "hfdcdhfd_Adult",
+                                    "hfdhfdhfd_Adult"),ordered = T)
 plot_cluster_heatmap(cluster_columns = F,
                      col_order = levels(annotation_seq$Merged))
 ```
@@ -243,18 +243,16 @@ NOTE: due to issues in the communication between R and Cytoscape, please refer t
 
 ```{r plot network coloured by cluster, fig.width=10, fig.height=7}
 
-# plot_integrated_network() 
+plot_integrated_network() 
+
 
 ```
 
 
-## OPTIONAL: Cluster scores
+## Create gene Lists
 
   If you would like to evaluate how well each gene belongs to its asserted cluster, please refer to the satellite markdown, section "Cluster scores".
 ```{r}
-#Export CLusters
-#clusterRes=hcocena::cluster_calculation(return_result = T)
-# take the clusters for profiling
 
 KEGGset <- msigdbr::msigdbr(
   species = "Mus musculus",
@@ -287,18 +285,68 @@ for(i in unique(res$color)){
   }
   clusterGenes[[i]] <- strsplit(res[res$color==i,"gene_n"],split=",")[[1]]
   print(paste0(i, " Hif1a present: ", hifa %in% clusterGenes[[i]] ))
-  #print(table(allTermAssocGenesHallmark$ensembl_gene%in%strsplit(res[res$color==i,"gene_n"],split=",")[[1]]))
-  #print(table(allTermAssocGenesKEGG$ensembl_gene%in%strsplit(res[res$color==i,"gene_n"],split=",")[[1]]))
-  
+
 }
 
 
 
-# get_cluster_scores()
+#get_cluster_scores()
 
 
 ```
 
+## Highlight GeneSet
+```{r}
+highlight_geneset_LS<-function (gene_set, col = "black") 
+{
+  gtc <- GeneToCluster() %>% dplyr::filter(., !color == "white")
+  g <- hcobject[["integrated_output"]][["merged_net"]]
+  g <- igraph::delete_vertices(g, igraph::V(g)$name[!igraph::V(g)$name %in% 
+    gtc$gene])
+  base::rownames(gtc) <- gtc$gene
+  gtc <- gtc[igraph::V(g)$name, ]
+  counter_found <- 0
+  igraph::V(g)$color <- base::lapply(gtc$gene, function(x) {
+    if (x %in% gene_set) {
+      counter_found <- counter_found+1
+      dplyr::filter(gtc, gene == x) %>% dplyr::pull(., 
+        "color")
+    }
+    else {
+      NA
+    }
+  }) %>% base::unlist()
+  
+  print(counter_found)
+  igraph::V(g)$size <- base::lapply(gtc$gene, function(x) {
+    if (x %in% gene_set) {
+      5
+    }
+    else {
+      3
+    }
+  }) %>% base::unlist()
+  igraph::V(g)$frame.color <- base::lapply(gtc$gene, function(x) {
+    if (x %in% gene_set) {
+      col
+    }
+    else {
+      "lightgrey"
+    }
+  }) %>% base::unlist()
+  l <- hcobject[["integrated_output"]][["cluster_calc"]][["layout"]]
+   l <- l[igraph::V(g)$name, ]
+  l <- l[base::rownames(l) %in% igraph::V(g)$name, ]
+  # Create overlay only
+  igraph::E(g)$color <- NA
+
+
+  igraph::plot.igraph(g, vertex.label = NA, layout = l)
+}
+gtc <- GeneToCluster() %>% dplyr::filter(., !color == "white")
+table(allTermAssocGenesKEGG$ensembl_gene %in% gtc$gene)
+highlight_geneset_LS(gene_set = allTermAssocGenesKEGG$ensembl_gene)
+```
 ## Do ORA analysis
 
 ```{r GO profiling, fig.width = 10, fig.height = 7, message = F, warning = F}
@@ -338,13 +386,37 @@ for(i in unique(res$color)){ # clusterRes$color
   
   pval=ORA_cluster_results[[i]]$KEGG[grepl("GLYCOLYSIS",ORA_cluster_results[[i]]$KEGG$ID),"qvalue"]
   pval_H=ORA_cluster_results[[i]]$HALLMARK[grepl("GLYCOLYSIS",ORA_cluster_results[[i]]$HALLMARK$ID),"qvalue"]
-  print(paste0(i,"Gly KEGG: ",pval))
-  print(paste0(i,"Gly HALLMARK: ",pval_H))
+  if(length(pval)>0){
+      if(pval<0.1){
+     print(paste0(i," Gly KEGG: ",pval))
+  }
+  }
+if(length(pval_H)>0){
+ if(pval_H<0.1){
+   print(paste0(i," Gly HALLMARK: ",pval_H))
+ }}
+  
   
   pval=ORA_cluster_results[[i]]$KEGG[grepl("HYPOXIA",ORA_cluster_results[[i]]$KEGG$ID),"qvalue"]
   pval_H=ORA_cluster_results[[i]]$HALLMARK[grepl("HYPOXIA",ORA_cluster_results[[i]]$HALLMARK$ID),"qvalue"]
-  print(paste0(i,"Hyp KEGG: ",pval))
-  print(paste0(i,"Hyp HALLMARK: ",pval_H))
+  if(length(pval)>0){
+    if(pval<0.1){
+     print(paste0(i," Hyp KEGG: ",pval))
+    }}
+    if(length(pval_H)>0){
+   if(pval_H<0.1){
+     print(paste0(i," Hyp HALLMARK: ",pval_H))
+   }}
+
+  
+  pval_H=ORA_cluster_results[[i]]$HALLMARK[grepl("OXIDATIVE",ORA_cluster_results[[i]]$HALLMARK$ID),"qvalue"]
+  if(length(pval_H)>0){
+    if(pval_H<0.1){
+   print(paste0(i," OXIDATIVE HALLMARK: ",pval_H))
+ }}
+  
+  
+  
   
   ORA_cluster_results[[i]][["GeneSet"]] <- clusterGenes[[i]]
 }
@@ -365,100 +437,85 @@ saveRDS(ORA_cluster_results,"Transcriptomics_ORA_CoCena_results_KC_WT.rds")
 selectedPathways <- c("OXIDATIVE_PHOSPHORYLATION","GLYCOLYSIS","HYPOXIA","NoraSet","Oxphos_selected_turq","Glycolysis_selected_plum")
 selectedPathways <- c("OXIDATIVE_PHOSPHORYLATION","GLYCOLYSIS")
 selectedPathways <- c("Oxphos_selected_turq","Glycolysis_selected_plum","Hypoxia_selected_plum","cytokine_response_steelblue")
+selectedPathways <- c("DE_LigandSet")
+selectedPathways <- c("OXIDATIVE_PHOSPHORYLATION;turquoise",
+                      "OXIDATIVE_PHOSPHORYLATION;lightgreen",
+                      "GLYCOLYSIS;steelblue",
+                      "cell_activation_involved_in_immune_response;steelblue")
+selectedPathways <- c("OXIDATIVE_PHOSPHORYLATION;selected",
+                      "GLYCOLYSIS;selected",
+                      "cell_activation_involved_in_immune_response;selected")
 # subset to those genes of interest w.r.t to cluster
  # i="DEFENSE_RESPONSE_TO_OTHER_ORGANISM"
  # i="RESPONSE_TO_CYTOKINE$"
 data2sum <-  vst_data
 
-for(i in selectedPathways){
+for(i_all in selectedPathways){
+  i_color<-unlist(strsplit(i_all,";"))[2]
+  i<-unlist(strsplit(i_all,";"))[1]
+  # get all terms KEGG & GO
   print(unique(KEGGset$gs_name[grepl(i,KEGGset$gs_name)]))
   allTermAssocGenesKEGG <- unique(KEGGset[grepl(i,KEGGset$gs_name),"ensembl_gene"])
-  union <- allTermAssocGenesKEGG$ensembl_gene
+  unionKEGG <- allTermAssocGenesKEGG$ensembl_gene
+  
+  
   print(unique(Hallmarkset$gs_name[grepl(i,Hallmarkset$gs_name)]))
   allTermAssocGenesHallmark <- unique(Hallmarkset[grepl(i,Hallmarkset$gs_name),"ensembl_gene"])
-  union <- unique(c(allTermAssocGenesKEGG$ensembl_gene,allTermAssocGenesHallmark$ensembl_gene))
+  unionHALLMARK <- unique(c(allTermAssocGenesHallmark$ensembl_gene))
   
   
+  print(unique(GOset$gs_name[grepl(paste0("GOBP_",i,"$"),GOset$gs_name,ignore.case = T)]))
+  allTermAssocGenesGO <- unique(GOset[grepl(paste0("GOBP_",i,"$"),GOset$gs_name,ignore.case = T),"ensembl_gene"])
   
-  print(unique(GOset$gs_name[grepl(i,GOset$gs_name)]))
-  allTermAssocGenesGO <- unique(GOset[grepl(i,GOset$gs_name),"ensembl_gene"])
-  allTermAssocGenesGO <- allTermAssocGenesGO$ensembl_gene
-  union <- unique(c(allTermAssocGenesGO))
+  if(i_color!="selected"){
+      allTermAssocGenesGO <- allTermAssocGenesGO$ensembl_gene
+  unionGO <- unique(c(allTermAssocGenesGO))
   
   
   #select all genes present in cluster of interest
   if(i=="OXIDATIVE_PHOSPHORYLATION"){
-     union_selected <- union[union %in% ORA_cluster_results[["turquoise"]]$GeneSet]
+     union_selected <- unionKEGG[unionKEGG %in% ORA_cluster_results[[i_color]]$GeneSet]
       sort(rowData(CoCena_Input_KC)[union_selected,"SYMBOL"])
   }
+
   if(i =="GLYCOLYSIS"){
-     union_selected <- union[union %in% ORA_cluster_results[["plum"]]$GeneSet]
+     union_selected <- unionKEGG[unionKEGG %in% ORA_cluster_results[[i_color]]$GeneSet]
      # to tranlsate
     union_trans <- rowData(CoCena_Input_KC)[union_selected,"SYMBOL"]
     paste(union_trans,collapse=",")
      
   }
-    if(i =="HALLMARK_INFLAMMATORY_RESPONSE"){
-     union_selected <- union[union %in% ORA_cluster_results[["steelblue"]]$GeneSet]
+    if(i =="cell_activation_involved_in_immune_response"){
+     union_selected <- unionGO[unionGO %in% ORA_cluster_results[[i_color]]$GeneSet]
      union_trans <- rowData(CoCena_Input_KC)[union_selected,"SYMBOL"]
-  }
- 
-  # if(i =="INTERFERON_GAMMA_RESPONSE"){ # hif1a in here
-  #    union_selected <- union[union %in% ORA_cluster_results[["turquoise"]]$GeneSet]
-  # }
-  
-    if(i =="HYPOXIA"){ # hif1a in here
-     union_selected <- union[union %in% ORA_cluster_results[["plum"]]$GeneSet]
-     union_trans <- rowData(CoCena_Input_KC)[union_selected,"SYMBOL"]
-  }
-  
-  if(i == "NoraSet"){
-    union_selected <- c("Il1b","Gusb","Tgdbi", "Aldob", "Pgam1", "Stmn1","Rars","Sdhc",
-                        "Ppfia4","Ak3","Hif1a","Egfr","Qsox1","Galk2","Got2","Idua",
-                        "Dcn","Slc25a10","Srd5a3","Med24","Chpf2","Mpi","Ugp2","Il15")
-    union_selected <- rownames(rowData(CoCena_Input_KC)[rowData(CoCena_Input_KC)[,"SYMBOL"] %in% union_selected,])
-    
-  }
-  
-  if(i == "Oxphos_selected_turq"){
-    union_selected <- c("Ndufb8", "Ndufc1", "Ndufb4","Atp5o","Atp5k",
-                        "Atp5a1","Cox7c","Cox7a2","Acadm","Acat1",
-                        "Uqcrb","Uqcrq","Timm13","Timm17a","Vdac2",
-                        "Vdac3","Mrpl11","Mrps12","Sdha","Sdhb")
-
-    union_selected <- rownames(rowData(CoCena_Input_KC)[rowData(CoCena_Input_KC)[,"SYMBOL"] %in% union_selected,])
-    
-  }
-  
-  if(i == "Glycolysis_selected_plum"){
-    union_selected <- c("Akr1a1","Aldoa","Eno1","Gapdh","Gpi1","Ldha","Pfkl","Pfkp","Pgam1","Pgk1","Pgm2","Pkm","Tpi1")
-    union_selected <- rownames(rowData(CoCena_Input_KC)[rowData(CoCena_Input_KC)[,"SYMBOL"] %in% union_selected,])
-    
-  }
-  
-    if(i == "Hypoxia_selected_plum"){
-    union_selected <- c("Aldoa","Anxa2","Cdkn1a","Dcn","Eno1","Fam162a","Galk1","Gapdh","Glrx","Gpi1","Ldha",
-                        "Mif","Mt1","Myh9","Pfkl","Pfkp","Pgk1","Pgm2","Plac8","Plin2","S100a4","Tgfbi","Tpi1")
-    union_selected <- rownames(rowData(CoCena_Input_KC)[rowData(CoCena_Input_KC)[,"SYMBOL"] %in% union_selected,])
-    
     }
-  
-  if(i == "cytokine_response_steelblue"){
-    union_selected <-c("Actr2","Actr3","Adam17","Adam9","Asah1","Bcat2","Birc3","Cacybp","Ccl3","Ccl2","Ccl22","Ccl4","Ccl7","Cd14",
-                       "Cd274","Cd300lf","Cd38","Cd40","Cd44","Cd47","Cnot7","Cxcl10","Cxcl13","Cxcl9","Cyld","Dapk1","Ebi3","Egr1","Eif2ak2",
-                       "Eprs","Erbin","Gba","Gbp2","Gbp3","Gbp4","Gbp8","Gbp9","Gbp7","Gps2","Hes1","Hif1a","Hipk1","Hk2","Hsp90ab1","Hspa1a","Hspa1b",
-                       "Hspa5","Ifi205","Ifih1","Ifit2","Ifit3","Ifngr1","Ifngr2","Ikbke","Il13ra1","Il15ra","Il17ra","Il1a","Il1rn","Il2rg","Irak2",
-                       "Irak3","Irgm1","Irgm2","Kdm3a","Lepr","Pira2","Lilra5","Lilr4b","Mefv","Mmp12","Nfe2l2","Nlrc5","Oas2","Parp14","Pdcd10","Pde1b",
-                       "Pdia3","Ptgis","Ptprc","Rab7b","Rabgef1","Rhoa","Sbno2","Snx10","Sppl2a","Srsf3","Srsf7","St3gal6","Stat1","Stat2","Stat3","Stip1",
-                       "Stxbp3","Synj1","Tank","Tbk1","Tcirg1","Tlr2","Tlr4","Tnfaip3","Trim56","Usp18","Vamp3","Vcam1","Xbp1","Xiap","Ythdf3","Yy1","Zfand6")
-    union_selected <- rownames(rowData(CoCena_Input_KC)[rowData(CoCena_Input_KC)[,"SYMBOL"] %in% union_selected,])
+  }else{
+      if(i == "OXIDATIVE_PHOSPHORYLATION"){
+        union_trans <- c("Ndufv1","Uqcrfs1","Sdha","Uqcrh","Cox4i1",
+                         "Ndufs3","Atp5e","Atp6v0b","Atp6v0e","Ndufa5",
+                         "Atp5j","Sdhb","Atp5o","Ndufb7","Ndufb8","Ndufa8",
+                         "Ndufb10","Cox17","Atp5j2","Ndufc1","Atp5k","Ndufa7",
+                         "Ndufb6","Uqcrq","Cox5b","Atp6v1g1","Cox7c","Ndufa9","Ndufa4")
+        union_selected <- rownames(rowData(CoCena_Input_KC)[rowData(CoCena_Input_KC)[,"SYMBOL"]%in%union_trans,])
+      }
+      if(i == "GLYCOLYSIS"){
+        union_trans <- c("Aldh2","Hk3","Aldh3b1","Adh5","Pfkl","Pgam1",
+                         "Tpi1","Pkm","Aldoa","Ldha","Gpi1","Gapdh","Eno1")
+        union_selected <- rownames(rowData(CoCena_Input_KC)[rowData(CoCena_Input_KC)[,"SYMBOL"]%in%union_trans,])
+      }
+      if(i == "cell_activation_involved_in_immune_response"){
+        union_trans <- c("Ptk2b","Lfng","Irf8","Il4ra","Slc11a1","Lrp1",
+                         "Il6ra","Itgal","Adgre5","Abl1","Tyrobp","Btk",
+                         "Hmox1","Relb","Spi1","Sphk2","Pik3cd","Lgals9",
+                         "Stat6","Lgals3","Fgr","Itgam","Syk","Rac2","Icam1",
+                         "Fcgr2b","Ccr2","Lgals1","Cx3cr1","Trem2","Myd88",
+                         "Trp53","Grn","Fes")
+        union_selected <- rownames(rowData(CoCena_Input_KC)[rowData(CoCena_Input_KC)[,"SYMBOL"]%in%union_trans,])
+      }
+    
   }
-  
+
   print(length(union_selected))
-  #union_selected <- union[union %in% unique(unlist(lapply(ORA_cluster_results,function(x) x$GeneSet)))]
- # union_selected <- ORA_cluster_results$steelblue$GeneSet
-
-
   
   subsetData <- data2sum[rownames(data2sum) %in% union_selected,]
   subsetData_df <- as.data.frame(t(subsetData))
@@ -478,6 +535,7 @@ for(i in selectedPathways){
   
   colnames(mean_per_condition) <- rowData(CoCena_Input_KC)[rownames(rowData(CoCena_Input_KC)) %in% colnames(mean_per_condition),"SYMBOL"]
   
+  
   #z_values <- as.data.frame(t(apply(mean_per_condition,1,scale)))
   z_values <- mean_per_condition
   colnames(z_values) <- colnames(mean_per_condition)
@@ -487,22 +545,23 @@ for(i in selectedPathways){
                colorRampPalette(c("#ffe8e8","#D62828"))(nBins_each)
   )
   
-  colorTheme <- c("#c6c6c6","#606060","#c12c38","#e0775f","#f3b694","#fce2d0")
+  colorTheme <- c("#c6c6c6","#606060","#c32b38","#fee2d1","#8a4094","#ebdeec")
   names(colorTheme) <- c("cdcdcd",
                         "cdcdhfd",
                         "hfdcdcd",
-                        "hfdcdhfd",
                         "hfdhfdcd",
+                        "hfdcdhfd",
                         "hfdhfdhfd")
   
   annoCol <- list(group = colorTheme)
   col_anno = data.frame(group = names(colorTheme))
   rownames(col_anno) = col_anno$group
-  
+  x <- z_values[names(colorTheme),] 
 
   
-
-  heatmap <- pheatmap(z_values,
+  savingName = paste0("hCoCena/results_KC_wt/Heatmap_",i_color,"_",i,".svg")
+svg(savingName)
+  pheatmap(x,
                  color = myColor,
                  scale="column",
                 # breaks = myBreaks, # no manual adjustment needed if scaling 
@@ -510,7 +569,7 @@ for(i in selectedPathways){
                  fontsize_number = 15,
                  cellheight = 10,
                  cellwidth = 10,
-                 #filename = givenFilename,
+                #filename = givenFilename,
                  annotation_colors = annoCol,
                  annotation_row  = col_anno,
                  treeheight_row = 0,
@@ -519,7 +578,7 @@ for(i in selectedPathways){
                 angle_col = 90,
                 cluster_rows = F
   )
-
+  dev.off()
 }
 
 

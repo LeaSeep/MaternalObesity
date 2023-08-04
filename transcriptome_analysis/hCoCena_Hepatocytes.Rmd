@@ -8,7 +8,7 @@ pdf_document: default
 ---
   
 # Introduction
-This Markdown contains the base workflow of hcocena. For a fully functional analysis, these steps are mandatory unless declared otherwise (flagged with OPTIONAL). Feel free to expand upon this base analysis with the provided satellite functions or your custom scripts. You will find detailed information on the satellite functions as well as intermediate outputs that you can use for your custom analyses in the repository's Wiki.
+This Markdown contains the base workflow of hcocena. You will find detailed information on the satellite functions as well as intermediate outputs that you can use for your custom analyses in the repository's Wiki.
 
 # Pre-Integration Phase
 
@@ -17,13 +17,11 @@ This Markdown contains the base workflow of hcocena. For a fully functional anal
 library(hcocena)
 ```
 
-
 ## create hCoCena-Object
 
 ```{r}
 init_object()
 ```
-
 
 ## Working directory setup
 
@@ -38,9 +36,7 @@ init_object()
 
 ```{r}
 
-#PATH_TO_REFERENCE_FILES_FOLDER="hCoCena/refFiles/"
 PATH_CoCena_results="hCoCena"
-
 
 CoCena_Input_HC <- readRDS("../data/CoCena_Input_HC.rds")
 vst_data <- counts(CoCena_Input_HC, normalized=TRUE)
@@ -49,7 +45,6 @@ vst_data <- counts(CoCena_Input_HC, normalized=TRUE)
 #data_seq <- as.data.frame(assay(vst_data))
 data_seq <- as.data.frame(vst_data)
 annotation_seq <- as.data.frame(colData(CoCena_Input_HC))
-
 
 init_wd(dir_count_data = F,
         dir_annotation = F,
@@ -72,12 +67,7 @@ init_save_folder(name = "results_HC")
 ```{r defining Omics Layers}
 # Just 1 layer
 define_layers(list( RNA_Seq = c("data_seq", "annotation_seq")))
-
-
 ```
-
-
-  
 
 ## Define global settings
 
@@ -86,7 +76,7 @@ define_layers(list( RNA_Seq = c("data_seq", "annotation_seq")))
 ```{r global settings}
 
 set_global_settings(organism = "mouse", 
-    								control_keyword = "none", #vs wt_cd_cd_cd
+    								control_keyword = "none",
     								variable_of_interest = "Merged", 
     								min_nodes_number_for_network = 50, 
     								min_nodes_number_for_cluster = 50,
@@ -101,7 +91,6 @@ set_global_settings(organism = "mouse",
 
   For detailed information regarding the different parameters, enter ?hcocena::read_data into the console.
 
-
 ```{r data import}
 read_data()
 ```
@@ -112,14 +101,12 @@ read_data()
 Find inflection points in the ranked variances to filter for the top most variant genes in a data-driven way. 
 
 ```{r}
-#?? does not work?
 hcocena::suggest_topvar()
 ```
 
 ## Define layer-specific settings
 
   For detailed information regarding the different settings, enter ?hcocena::set_layer_settings into the console.
-  
 
 ```{r layer-specific settings}
 
@@ -128,13 +115,12 @@ set_layer_settings(top_var = 5000,
                    range_cutoff_length = rep(100, length(hcobject[["layers"]])),
                    print_distribution_plots = rep(F, length(hcobject[["layers"]])))
 
-
 ```
 
 ## Data processing part I
 
   For detailed information on what happens in this step and what parameters can be set, enter ?hcocena::run_expression_analysis_1 into the console.
-  
+ 
 
 ```{r expression analysis up to cutoff}
 
@@ -155,13 +141,6 @@ run_expression_analysis_1(corr_method = "pearson")
 plot_cutoffs(interactive = T)
 
 ```
-  
-  
-  The order in which the cutoffs are subsequently defined must correspond to the order in which the layers have previously been specified.
-  LS: Strategy used to choose threshold: 
-  1 - check No of DE-Genes  (694)
-  2 - determine range of +-20% [833 - 555]
-  3 - within determined range select highest Rsquared ( here 0.737)
   
 
 ```{r choose cutoff}
@@ -186,7 +165,6 @@ plot_deg_dist()
   Heatmap of top most variant genes and GFC calculation
 
   This function plots a heatmap for the network genes in each data layer and computes the Group-Fold-Changes for each genes per layer.
-
 
 ```{r, fig.width = 10, fig.height = 7}
 
@@ -222,8 +200,7 @@ In this step, modules of strong co-expression will be detected in the network an
   
 ```{r compute clusters and plot module heatmap}
 res=cluster_calculation(cluster_algo = "cluster_leiden",no_of_iterations = 100, max_cluster_count_per_gene = 3) # 1000
-#col_anno_categorical(variables = NULL, variable_label = NULL) 
-#col_anno_categorical(variables = c("Maternal_diet"), variable_label = "Maternal_diet") 
+
 plot_cluster_heatmap(cluster_columns = F,
                      col_order = c("wt_cdcdcd_HC","ko_cdcdcd_HC",
                                    "wt_cdcdhfd_HC","ko_cdcdhfd_HC",
@@ -231,16 +208,11 @@ plot_cluster_heatmap(cluster_columns = F,
                                    "wt_hfdhfdhfd_HC","ko_hfdhfdhfd_HC"))
 ```
 
-
 ## OPTIONAL: correlate numeric meta data with clusters
 
   To see how numeric meta information correlates to the expression patterns of a cluster on a sample basis, refer to the satellite markdown, section "Correlate numeric meta data with clusters".
 
-
 ## Plotting the network coloured by module
-
-NOTE: due to issues in the communication between R and Cytoscape, please refer to the satellite markdown, section "Cytoscape" if you chose Cytoscape as the option for the network layout in your global settings.
-
 
 ```{r plot network coloured by cluster, fig.width=10, fig.height=7}
 
@@ -253,22 +225,11 @@ plot_integrated_network()
 
   If you would like to evaluate how well each gene belongs to its asserted cluster, please refer to the satellite markdown, section "Cluster scores".
 ```{r}
-#get_cluster_scores()
+get_cluster_scores()
 ```
 
-
+## Create gene Lists
 ```{r GO profiling, fig.width = 10, fig.height = 7, message = F, warning = F}
-
-#Export CLusters
-KEGGset <- msigdbr::msigdbr(
-  species = "Mus musculus",
-  category = "C2",
-  subcategory = "KEGG"
-)
-Hallmarkset <- msigdbr::msigdbr(
-  species ="Mus musculus",
-  category = "H",
-)
 
 res <- as.data.frame(res)
 clusterGenes <- list()
@@ -281,9 +242,6 @@ for(i in unique(res$color)){
   clusterGenes[[i]] <- strsplit(res[res$color==i,"gene_n"],split=",")[[1]]
 }
 
-
-
-# get_cluster_scores()
 ```
 
 
@@ -301,7 +259,6 @@ universe_entrez <- clusterProfiler::bitr(input_genes,
                         fromType = "ENSEMBL",
                         toType = "ENTREZID",
                         OrgDb = "org.Mm.eg.db")$ENTREZID
-
 
 ORA_cluster_results <- list()
 
