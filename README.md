@@ -2,9 +2,9 @@
 This is the repository to redo all analysis done within the Maternal Obesity project.
 (Manuscript Link will be added as soon as possible).
 If you want to:
-... redo the analysis for one omic type, please go to the respective subdirectory and execute the `main.R` script [More Infos]
-... check results tables regarding each Omic (DE analysis, ORA-analysis, CoCena) please checkout `Database.html`[More Infos]
-... reuse custom functions, checkout the `utils`- directory
+- redo the analysis for one omic type, please go to the respective subdirectory and execute the `main.R` script 
+- check results tables regarding each Omic (DE analysis, ORA-analysis, CoCena) please checkout `Database.html`
+- reuse custom functions, checkout the `utils`- directory
 
 # Usage
 ## Run main analysis
