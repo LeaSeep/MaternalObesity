@@ -1,3 +1,15 @@
+# Performs Ligand-Receptor Plot-Representation
+# Input:
+#  - take all DE Genes that are checked for being a ligand
+#  - takes the respective ligand- dds Object (to get the annotation)
+#  - takes all Genes that are checked for receptors
+#  - data matrix from database that indicates ligand-receptor relationships
+
+# Output:
+#  - nothing
+#  - saves plot directly to file
+
+
 doLigandReceptorPlot <- function(
     allDEGenes_ligand,
     dds_obj_Ligand,
@@ -48,7 +60,7 @@ doLigandReceptorPlot <- function(
   
   col_fun = colorRamp2(
     c(max(cirocsData_present$LFC)*-1,
-      -2.5,0,2.5,
+      -0.5,0,0.5,
       max(cirocsData_present$LFC)),
     c("darkred","bisque","white","azure","deepskyblue4")
     )

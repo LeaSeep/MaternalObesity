@@ -1,3 +1,11 @@
+# Batch Correction based on given design and specified variable as batch
+# Input:
+#   - Summarized Experiment object
+#   - design formula
+#   - name of factor which specifies the batch
+# Output:
+#   - batch-corrected Summarized Experiment object
+
 doBatchCorrection <- function(
     SumExp_obj,
     design_factor,

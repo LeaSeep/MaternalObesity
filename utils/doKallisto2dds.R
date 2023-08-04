@@ -1,3 +1,12 @@
+# Do kallisto Alignment
+# Input: 
+#  - path to files
+#  - sample table with annotation
+#  - transcript annotation path
+
+# Output:
+#  - Input to DESeq2 pipeline
+
 doKallisto2dds <- function(
     kallisto_path,
     sampleTable, # one column needs to be called ID!

@@ -1,3 +1,11 @@
+# Does the ANOVA analysis, contrasting specified combinations
+# Input:
+#  - SummarizedExperiment Object
+#  - Name of 1st factor from design
+#  - Name of 2nd factor from design
+#  - 1st name of contrast combi
+#  - 2nd name of contrast combi
+
 doANovaContrast <- function(
     SumExpObj,
     design_fact1 = "MOTHER_DIET",

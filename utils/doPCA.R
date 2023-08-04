@@ -1,4 +1,11 @@
 # Do PCA
+# Input:
+#   - DESeq2 Object
+#   - name of factor for shape
+#   - name of factor for color
+
+# Output:
+#   - PCA plot
 doPCA <- function(dds,
                   colorTheme=NULL,
                   shapeVar,
@@ -6,7 +13,6 @@ doPCA <- function(dds,
                   xPC = "PC1",
                   yPC = "PC2"
                   ){
-  #data <- as.data.frame(assay(vst(dds,blind=T)))
   data <- as.data.frame(assay(dds))
   pca <- prcomp(
     as.data.frame(t(data)),
@@ -42,7 +48,8 @@ if(is.null(colorTheme)){
     theme(text=element_text(size = 21),aspect.ratio = 1)
 }else{
   pca_plot <- ggplot(pcaData, aes(x = pcaData[,xPC],
-                                  y = pcaData[,yPC])) +
+                                  y = pcaData[,yPC],
+                                  label=ID)) +
     geom_point(size =3,aes(shape = pcaData[,shapeVar],fill = pcaData[,colorVar]))+
     scale_shape_manual(values = c(21,24)) +
     scale_fill_manual(values = colorTheme,
@@ -55,11 +62,5 @@ if(is.null(colorTheme)){
     theme(text=element_text(size = 21),aspect.ratio = 1)
 }
 
-  
   return(pca_plot)
 }
-
-
-
-
-

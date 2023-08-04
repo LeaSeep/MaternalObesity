@@ -1,10 +1,20 @@
+# Does the Over-Representation Analysis for the KEGG, GO and Hallmark sets 
+# (murine sets)
+# Input:
+#  - gene set to test
+#  - universe to test against
+# Output:
+#  - Enrichment results as a list
+
+
 doOra <- function(
     geneSet,
     type=NULL,
     levelGOTerms=6,
     universe_entrez=NULL,
     filename,
-    qvalue_cutoff=0.1){
+    qvalue_cutoff=0.1,
+    GoFilter=F){
   
   result = list()
 
@@ -26,7 +36,9 @@ doOra <- function(
       {
         # The following could be used to combine at a certain level
         EnrichmentRes_GO_filter <- EnrichmentRes_GO
-        #EnrichmentRes_GO_filter = gofilter(EnrichmentRes_GO, level = 2)
+        if(GoFilter){
+          EnrichmentRes_GO_filter = gofilter(EnrichmentRes_GO, level = levelGOTerms)
+        }
         EnrichmentRes_GO_filter_simple <- clusterProfiler::simplify(EnrichmentRes_GO_filter,
                                                                     cutoff = 0.8,
                                                                     by = "p.adjust",
@@ -59,8 +71,12 @@ doOra <- function(
         new <- round(tmp[1]/tmp[2],4)*100
         paste0(new,"%")
     }))
-  
+    
+    # add a column to get genes in term , done in GO
+    EnrichmentRes_GO_filter_simple@result$geneNames <- EnrichmentRes_GO_filter_simple@result$geneID
 
+    
+  
     result[["GO"]] <- EnrichmentRes_GO_filter_simple@result
 
   }
@@ -93,12 +109,26 @@ doOra <- function(
       }
       
       # add a column to calc cluster gene ration
-      EnrichmentRes_Kegg@result$GeneRatio_perc <- 
-        unlist(lapply(strsplit(EnrichmentRes_Kegg@result$GeneRatio,"/"),function(x){
+      EnrichmentRes_GO_filter_simple@result$GeneRatio_perc <- 
+        unlist(lapply(strsplit(EnrichmentRes_GO_filter_simple@result$GeneRatio,"/"),function(x){
           tmp <- as.numeric(x)
           new <- round(tmp[1]/tmp[2],4)*100
           paste0(new,"%")
         }))
+      
+      
+      # add a column to get genes in term
+      EnrichmentRes_Kegg@result$geneNames <- 
+       unlist(lapply(strsplit(EnrichmentRes_Kegg@result$geneID,"/"),function(x){
+          tmp <- clusterProfiler::bitr(x,
+                                       fromType="ENTREZID",
+                                       toType="SYMBOL",
+                                       OrgDb="org.Mm.eg.db")$SYMBOL
+          tmp <- paste0(as.character(tmp),collapse = "/")
+        }))
+      
+
+
       
       result[["KEGG"]] <- EnrichmentRes_Kegg@result
     }else{
@@ -121,8 +151,8 @@ doOra <- function(
       TERM2GENE = Hallmarkset
     )
 
-    if(!is.null(EnrichmentRes_Hallmarks)){    
-      if(all(EnrichmentRes_Hallmarks@result$p.adjust>=qvalue_cutoff)){
+    if( !is.null(EnrichmentRes_Hallmarks) ){    
+      if( all(EnrichmentRes_Hallmarks@result$p.adjust >= qvalue_cutoff) ){
         print("Hallmark nothing enriched - check result object")
       }else{
         png(paste0(filename,"_ORA","_HALLMARK.png"))
@@ -139,6 +169,17 @@ doOra <- function(
           tmp <- as.numeric(x)
           new <- round(tmp[1]/tmp[2],4)*100
           paste0(new,"%")
+        }))
+      
+      
+      # add a column to get genes in term
+      EnrichmentRes_Hallmarks@result$geneNames <- 
+        unlist(lapply(strsplit(EnrichmentRes_Hallmarks@result$geneID,"/"),function(x){
+          tmp <- clusterProfiler::bitr(x,
+                                       fromType="ENTREZID",
+                                       toType="SYMBOL",
+                                       OrgDb="org.Mm.eg.db")$SYMBOL
+          tmp <- paste0(as.character(tmp),collapse = "/")
         }))
     
       result[["HALLMARK"]] <- EnrichmentRes_Hallmarks@result

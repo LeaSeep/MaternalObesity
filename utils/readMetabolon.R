@@ -44,7 +44,7 @@ readInMetabolon <- function(
                                         rowData = object$annotation_rows[rownames(object$Matrix),],
                                         colData = object$sample_table)
   
-  # check if correct and save as Shiny Object already?!
+  # check if TRUE and save as Object (which can be uploaded to cOMICS-ART)
   if(saveAsShinyRds){
     toShiny=list()
     toShiny[["Metabolomics"]]=object

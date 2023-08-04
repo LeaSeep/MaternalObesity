@@ -1,14 +1,16 @@
 # Parse your data like the following sample table
 # data:
 # entities x samples
+
 # annotationEntities:
 # entities x groups (e.g. Class)
 # summarise_by = character (must be one of the colnames of annotationEntities)
 # sampleAnno:
+
 # samples x groups (e.g. wt or ko)
 # LFC_between = character (must be one of the colnames of sampleAnno)
 # FC_ctrl = character must be a level of LFC_between specified column
-# givenFilename = for saving the heatmap (incl extesnion to specificy filetype)
+# givenFilename = for saving the heatmap (incl. extension to specify filetype)
 
 # Outputs: 
 #   - Heatmap
@@ -231,6 +233,8 @@ doSigLFCHeatmap=function(
     scale_fill_manual(values = myColor,breaks = levels(color_df$x), drop=F)+
     scale_x_discrete(drop=FALSE,limits = levels(color_df$x))+
     theme_void()
+  
+  
   
   ggsave(filename = gsub(".png","_colorHist.png",givenFilename), plot = colorKey)
   ggsave(filename = gsub(".png","_colorHist.svg",givenFilename), plot = colorKey)
