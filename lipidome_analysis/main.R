@@ -188,6 +188,7 @@ print(paste0(
 ))
 
 
+
 results_ko <- doSigLFCHeatmap(
   as.data.frame(assay(Lipid_SumExp_subset)),
   as.data.frame(rowData(Lipid_SumExp_subset)),
@@ -219,6 +220,9 @@ colorTheme <- c("#a6cee3","#1f78b4","#b2df8a","#33a02c",
                 "#fdbf6f","#ff7f00","#fb9a99","#e31a1c")
 assay(Lipid_SumExp_log2) <- log2(assay(Lipid_SumExp_log2)+1)
 Lipid_SumExp_log2$ID <- colnames(Lipid_SumExp_log2)
+Lipid_SumExp_log2$Maternal.diet <- "obese"
+Lipid_SumExp_log2$Maternal.diet[grepl("^CD",Lipid_SumExp_log2$ID)] <- "lean"
+
 KO_PCA <- doPCA(
   Lipid_SumExp_log2,
   colorTheme = colorTheme,
