@@ -96,11 +96,7 @@ de_seq_result_KC <- DESeq(dds_KC)
 res_KC <- results(de_seq_result_KC,
                   contrast =c("Merged","ko_hfdcdcd_KC","wt_hfdcdcd_KC"),
                   alpha = 0.1)
-res_KC <- results(de_seq_result_KC,
-                  contrast =c("Merged","ko_hfdcdcd_KC","wt_hfdcdcd_KC"),
-                  alpha = 0.1)
 
-test<-lfcShrink(de_seq_result_KC,contrast =c("Merged","ko_hfdcdcd_KC","wt_hfdcdcd_KC"),type="ashr",lfcThreshold=1)
 
 summary(res_KC)
 output_result_list[["dds_KC"]] <- res_KC
@@ -200,19 +196,25 @@ dds_KC_WT_P0 <- preprocessing(dds_KC_WT_P0,10,
                            removeConstRows=T,
                            filterPerSample=T)
 de_seq_result_KC_WT_P0 <- DESeq(dds_KC_WT_P0) 
-deg <- de_seq_result_KC_WT_P0 %>%
-  select(SYMBOL, log2FoldChange, stat, pvalue,padj) %>% 
-  filter(!is.na(stat)) %>% 
-  column_to_rownames(var = "SYMBOL") %>%
-  as.matrix()
-deg <- as.data.frame(deg)
-deg <- deg[!is.na(deg$log2FoldChange),]
 
-deg <- deg[deg[,"pvalue"]<0.05,]
 res_KC_wt_P0 <- results(de_seq_result_KC_WT_P0,
                      contrast =c("Condition","HFD","CD"),
                      alpha = 0.1)
 summary(res_KC_wt_P0)
+deg_df <- res_KC_wt_P0
+deg_df$SYMBOL <- rowData(de_seq_result_KC_WT_P0)[rownames(deg_df),"SYMBOL"]
+deg_df <- as.data.frame(deg_df)
+rownames(deg_df) <- NULL
+
+deg <- deg_df %>%
+  select(SYMBOL, log2FoldChange, stat, pvalue,padj) %>% 
+  filter(!is.na(stat)) 
+
+deg <- as.data.frame(deg)
+deg <- deg[!is.na(deg$log2FoldChange),]
+
+deg <- deg[deg[,"pvalue"]<0.05,]
+
 output_result_list[["dds_KC_WT_P0"]] <- res_KC_wt_P0
 
 # save objects to use for TF - analysis
@@ -367,9 +369,10 @@ P_boxplots <- ggplot(data2plot,
           text = element_text(size=20))
 
 ggsave(filename = paste0("HC_SelectedGenesBoxplot_",Sys.Date(),".png"), plot=P_boxplots)
-ggsave(filename = paste0("HC_SelectedGenesBoxplot_",Sys.Date(),".svg"), plot=P_boxplots)
+ggsave(filename = paste0("HC_SelectedGenesBoxplot_",Sys.Date(),".svg"), plot=P_boxplots,,device = svglite::svglite)
 
 #### Heatmap ----
+CoCena_Input_HC <- DESeq(dds_HC)
 data2sum <- vst_de_seq_result_HC
 print(length(selectedSymbols))
 union_selected <-  union_selected <- rownames(rowData(CoCena_Input_HC)[rowData(CoCena_Input_HC)[,"SYMBOL"] %in% selectedSymbols,])
