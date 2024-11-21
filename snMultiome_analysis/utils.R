@@ -1,4 +1,167 @@
 # utils
+library(Signac)
+library(EnsDb.Mmusculus.v79)
+library(reticulate)
+library('openxlsx')
+# takes 10 Input File and returns Seurat object with 
+# filtered RNA take counts taken diretly from Seurat
+# and new generated Macs call
+MacPeakCalling <- function(
+    absolut_path = "/Volumes/My_Book/Seep_Lea/current/Lipid+Trans/scRNA_ATAC_data/",
+    env_path ="./",
+    sample_typ = "wtHFDCDCD",
+    QC_plots = T
+){
+  
+  # the 10x hdf5 file contains both data types. 
+  inputdata.10x <- Read10X_h5(paste0(absolut_path,sample_typ,"/filtered_feature_bc_matrix.h5"))
+  rna_counts <- inputdata.10x$`Gene Expression`
+  pbmc <- CreateSeuratObject(counts = rna_counts, assay="RNA")
+  
+  frag.file <- paste0(absolut_path,sample_typ,"/atac_fragments.tsv.gz")
+
+  annotation <- Signac::GetGRangesFromEnsDb(ensdb = EnsDb.Mmusculus.v79)
+  
+  
+  
+  # create ATAC assay and add it to the object
+  atac_peaks <- inputdata.10x$Peaks
+  grange.counts <- StringToGRanges(rownames(atac_peaks), sep = c(":", "-"))
+  grange.use <- seqnames(grange.counts) %in% standardChromosomes(grange.counts)
+  atac_peaks <- atac_peaks[as.vector(grange.use), ]
+  
+  seqlevels(annotation) <- paste0('chr', seqlevels(annotation))
+  genome(annotation) <- "mm10"
+  
+  pbmc[["ATAC"]] <- CreateChromatinAssay(
+    counts = atac_peaks,
+    sep = c(":", "-"),
+    fragments = frag.file,
+    annotation = annotation
+  )
+  
+  
+  pbmc[["percent.mt"]] <- PercentageFeatureSet(pbmc, 
+                                               pattern = "^mt-",
+                                               assay = "RNA")
+  
+  DefaultAssay(pbmc) <- "ATAC"
+  
+  pbmc <- NucleosomeSignal(pbmc)
+  pbmc <- TSSEnrichment(pbmc)
+  
+  
+  # filter out low quality cells (this currently filters on the ATAC (from 10x peaks) and not from MACS)
+  pbmc_filtered <- subset(
+    x = pbmc,
+    subset = 
+      nCount_ATAC > 1000 &
+      nCount_RNA > 500 & #https://hbctraining.github.io/scRNA-seq/lessons/04_SC_quality_control.html
+      nucleosome_signal < 2 &
+      TSS.enrichment > 1 &
+      percent.mt < 1 &
+      nFeature_RNA > 200 & 
+      nFeature_RNA < 2500
+    
+  )
+  ## Filtered usage
+  # needs a previously create venv!
+  tryCatch(reticulate::use_virtualenv("/root/.virtualenvs/r-reticulate"),
+           error = function(e){
+             warning(paste0("You need to create venv first. Must be in current dir: ",getwd()))
+             return(NULL)
+           })
+  
+  reticulate::py_config()
+  DefaultAssay(pbmc_filtered) <- "ATAC"
+  peaks <- Signac::CallPeaks(pbmc_filtered,macs2.path ="/root/.virtualenvs/r-reticulate/bin/macs3")
+  
+  # remove peaks on nonstandard chromosomes and in genomic blacklist regions
+  peaks <- keepStandardChromosomes(peaks, pruning.mode = "coarse")
+  peaks <- subsetByOverlaps(x = peaks, ranges = blacklist_mm10, invert = TRUE)
+  
+  
+  # quantify counts in each peak
+  macs2_counts <- FeatureMatrix(
+    fragments = Fragments(pbmc_filtered),
+    features = peaks,
+    cells = colnames(pbmc_filtered)
+  )
+  
+  # create a new assay using the MACS3 peak set and add it to the Seurat object
+  pbmc_filtered[["peaks"]] <- CreateChromatinAssay(
+    counts = macs2_counts,
+    fragments = frag.file,
+    annotation = annotation
+  )
+  
+  
+  # compute nucleosome signal score per cell
+  DefaultAssay(pbmc_filtered) <- "peaks"
+  
+  pbmc_filtered <- NucleosomeSignal(object = pbmc_filtered)
+  pbmc_filtered <- TSSEnrichment(object = pbmc_filtered, fast = FALSE)
+  
+  # add blacklist ratio and fraction of reads in peaks
+  total_fragements <- CountFragments(frag.file)
+  rownames(total_fragements) <- total_fragements$CB
+  pbmc_filtered$fragments <- total_fragements[colnames(pbmc_filtered), "frequency_count"]
+  
+  pbmc_filtered <- FRiP(
+    object = pbmc_filtered,
+    assay = 'peaks',
+    total.fragments = 'fragments'
+  )
+  
+  pbmc_filtered$blacklist_fraction <- FractionCountsInRegion(
+    object = pbmc_filtered, 
+    assay = 'peaks',
+    regions = blacklist_mm10
+  )
+  
+  
+  pbmc_filtered$blacklist_ratio <- pbmc_filtered$blacklist_fraction
+  pbmc_filtered$pct_reads_in_peaks <- pbmc_filtered$FRiP
+  pbmc_filtered$orig.ident <- sample_typ
+  
+  
+  if(QC_plots){
+    QC_plots <- list()
+    # Visualize QC metrics as a violin plot
+    
+    QC_plots[["all_Feature_Counts_mt_Vln"]] <- VlnPlot(pbmc, 
+                                                       features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), 
+                                                       ncol = 3)
+    QC_plots[["filtered_Feature_Counts_mt_Vln"]] <- VlnPlot(pbmc_filtered, 
+                                                            features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), 
+                                                            ncol = 3)
+    QC_plots[["filtered_rnaC_mt_Scatter"]] <- FeatureScatter(pbmc_filtered,
+                                                             feature1 = "nCount_RNA",
+                                                             feature2 = "percent.mt")
+    QC_plots[["filtered_rnaC_feature_Scatter"]] <- FeatureScatter(pbmc_filtered,
+                                                                  feature1 = "nCount_RNA",
+                                                                  feature2 = "nFeature_RNA")
+    
+    
+    QC_plots[["all_allQC"]] <- VlnPlot(object = pbmc,
+                                       features = c("nCount_RNA",'nCount_ATAC', 'TSS.enrichment', 'nucleosome_signal'),
+                                       pt.size = 0,
+                                       ncol = 4)
+    
+    
+    QC_plots[["filtered_allQC"]] <- VlnPlot(object = pbmc_filtered,
+                                            features = c('nCount_ATAC', 'TSS.enrichment', 'blacklist_ratio', 'nucleosome_signal', 'FRiP'),
+                                            pt.size = 0,
+                                            ncol = 5)
+    
+    return(list(seuratObj = pbmc_filtered, QC_Plots = QC_plots))
+    
+  }else{
+    return(list(seuratObj = pbmc_filtered, QC_Plots = NULL))
+  }
+  
+}
+
 
 RNA_integration <- function(seurat.list){
   features <- SelectIntegrationFeatures(object.list = seurat.list, nfeatures = 3000)
@@ -81,7 +244,7 @@ FindMarkers2Excel <- function(seurat,
   names(markersList) <- paste0("cluster",0:totalNrClusters)
   
   ### Write to Excel
-  library('openxlsx')
+
   write.xlsx(markersList, file =filename)
   return(markersList)
 }
