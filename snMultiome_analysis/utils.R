@@ -51,14 +51,14 @@ MacPeakCalling <- function(
   pbmc <- TSSEnrichment(pbmc)
   
   
-  # filter out low quality cells (this currently filters on the ATAC (from 10x peaks) and not from MACS)
+  # filter out low quality cells (this currently filters on the RNA (from before moving to MACS to decrease run time a bit)
   pbmc_filtered <- subset(
     x = pbmc,
     subset = 
-      nCount_ATAC > 1000 &
+  #    nCount_ATAC > 1000 &
       nCount_RNA > 500 & #https://hbctraining.github.io/scRNA-seq/lessons/04_SC_quality_control.html
-      nucleosome_signal < 2 &
-      TSS.enrichment > 1 &
+  #    nucleosome_signal < 2 &
+  #    TSS.enrichment > 1 &
       percent.mt < 1 &
       nFeature_RNA > 200 & 
       nFeature_RNA < 2500
@@ -124,6 +124,19 @@ MacPeakCalling <- function(
   pbmc_filtered$pct_reads_in_peaks <- pbmc_filtered$FRiP
   pbmc_filtered$orig.ident <- sample_typ
   
+  # complete filter
+  pbmc_filtered <- subset(
+    x = pbmc_filtered,
+    subset = 
+      nCount_ATAC > 1000 &
+      nCount_RNA > 500 & #https://hbctraining.github.io/scRNA-seq/lessons/04_SC_quality_control.html
+      nucleosome_signal < 2 &
+      TSS.enrichment > 1 &
+      percent.mt < 1 &
+      nFeature_RNA > 200 & 
+      nFeature_RNA < 2500
+    
+  )
   
   if(QC_plots){
     QC_plots <- list()
