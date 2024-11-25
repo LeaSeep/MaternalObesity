@@ -1,6 +1,6 @@
 # additional visualisations
 
-## Pre integration ----
+# Pre integration vis ----
 library(ggplot2)
 DimPlot(wt_scMulti_CD, 
         reduction = "umap.rna", 
@@ -25,7 +25,7 @@ FeaturePlot(wt_scMulti_HFD, features = "nCount_RNA")
 FeaturePlot(wt_scMulti_HFD, features = "nFeature_RNA")
 
 
-# Indetifying cluster annotation
+# Cluster Marker all cells ----
 DefaultAssay(int.allCond) <- "RNA"
 
 svglite::svglite("DotPlot_MarkerOverCellTypes.svg",width = 15, height = 10)
@@ -90,36 +90,7 @@ DotPlot(int.allCond_woDoublets,
   theme(aspect.ratio = 0.5)
 dev.off()
 
-
-DimPlot(int.allCond_myeloid, 
-        reduction = "umap.myeloid.wnn", 
-        label = TRUE, label.size = 5, repel = TRUE,
-        split.by  = "orig.ident") + 
-  ggtitle("integrated WNN")
-Idents(int.allCond_myeloid) <- int.allCond_myeloid$seurat_clusters
-DimPlot(int.allCond_myeloid, 
-        reduction = "umap.myeloid.wnn", 
-        label = TRUE, 
-        label.size = 5,
-        split.by="orig.ident",
-        repel = TRUE,
-        cols = colorSubset) + 
-  ggtitle("integrated WNN")
-
-
-DefaultAssay(int.allCond_myeloid) <- "RNA"
-FeaturePlot(int.allCond_myeloid,
-            features = c("Apoe"),
-            reduction = 'umap.myeloid.wnn',
-            split.by = "orig.ident")
-
-DefaultAssay(int.allCond_myeloid) <- "SCT"
-DotPlot(int.allCond_myeloid,
-        features = c("Apoe"),
-        #reduction = 'umap.myeloid.wnn',
-        split.by = "orig.ident")
-
-
+# Cluster Marker KC subsets ----
 # new colors
 colorSubset<-c("#cb997e","#2a9d8f",
                "#8ab17d","#e9c46a",
@@ -169,7 +140,9 @@ DotPlot(
 )+RotatedAxis()+ theme(aspect.ratio = 1)
 
 
-# To get all pVals
+# Singel Gene vis ----
+genesOfInterest_basedOnPeak_2 <- c("Gpnmb","Pck1","Apoe","Apoa1")
+
 list_markers_betweenCond <- list()
 int.allCond_myeloid_woCluster5_SCTprepped$merged_cond <- paste0(int.allCond_myeloid_woCluster5_SCTprepped$orig.ident,
                                                      "_",
@@ -188,10 +161,6 @@ for(i in 0:4){
   list_markers_betweenCond[[paste0("cluster",i)]] <- DE
 }
 
-
-DefaultAssay(int.allCond_myeloid_woCluster5_SCTprepped) <- "RNA"
-chosenGenes <- "Apoe"
-genesOfInterest_basedOnPeak_2 <- c("Gpnmb","Pck1","Apoe","Apoa1")
 
 for(i in genesOfInterest_basedOnPeak_2){
   chosenGenes <- i
