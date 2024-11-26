@@ -304,3 +304,23 @@ for(i in genesOfInterest_basedOnPeak_2){
   }
 }
 
+# Coverage plot Zoom ----
+
+# Extract ggplot built object
+covPlot_built <- ggplot_build(covPlot)
+
+# Inspect the data[[3]] to confirm structure (already shown in your output)
+head(covPlot_built$data[[3]])
+
+# Modify the alpha column in data[[3]]
+covPlot_built$data[[3]][covPlot_built$data[[3]]$fill=="black","alpha"] <- 0.5  # Set alpha to fully opaque
+
+# Rebuild the plot with modified data
+covPlot_built <- ggplot_gtable(covPlot_built)
+
+# Convert the gtable back to a ggplot object and display
+svglite::svglite("Apoa_Zoom_region.svg", width = 10, height = 10)
+  grid::grid.draw(covPlot_built)
+dev.off()
+
+
