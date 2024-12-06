@@ -451,8 +451,8 @@ selectedPathways <- c("OXIDATIVE_PHOSPHORYLATION;selected",
 data2sum <-  vst_data
 
 for(i_all in selectedPathways){
-  i_color<-unlist(strsplit(i_all,";"))[2]
-  i<-unlist(strsplit(i_all,";"))[1]
+  i_color <- unlist(strsplit(i_all,";"))[2]
+  i <- unlist(strsplit(i_all,";"))[1]
   # get all terms KEGG & GO
   print(unique(KEGGset$gs_name[grepl(i,KEGGset$gs_name)]))
   allTermAssocGenesKEGG <- unique(KEGGset[grepl(i,KEGGset$gs_name),"ensembl_gene"])
@@ -509,7 +509,7 @@ for(i_all in selectedPathways){
                          "Hmox1","Relb","Spi1","Sphk2","Pik3cd","Lgals9",
                          "Stat6","Lgals3","Fgr","Itgam","Syk","Rac2","Icam1",
                          "Fcgr2b","Ccr2","Lgals1","Cx3cr1","Trem2","Myd88",
-                         "Trp53","Grn","Fes")
+                         "Trp53","Grn","Fes","Gpnmb")
         union_selected <- rownames(rowData(CoCena_Input_KC)[rowData(CoCena_Input_KC)[,"SYMBOL"]%in%union_trans,])
       }
     
