@@ -5,7 +5,6 @@ library(Seurat)
 library(Signac)
 source("utils.R")
 library(AnnotationHub)
-library(ge)
 library(ggplot2)
 library(ggsci)
 library(hdf5r)
@@ -425,18 +424,18 @@ gg1
 dev.off()
 
 # TF analysis with decouplR ----
-Idents(int.allCond_myeloid_woCluster5)<- int.allCond_myeloid_woCluster5$seurat_clusters
-int.allCond_myeloid_woCluster5_SCTprepped <- PrepSCTFindMarkers(int.allCond_myeloid_woCluster5)
-markers_loosened <- FindAllMarkers(int.allCond_myeloid_woCluster5_SCTprepped,
+DefaultAssay(int.allCond_myeloid_woCluster5) <- "RNA"
+# get cluster specific markers
+Idents(int.allCond_myeloid_woCluster5) <- int.allCond_myeloid_woCluster5$seurat_clusters
+markers_loosened <- FindAllMarkers(int.allCond_myeloid_woCluster5,
                                    min.pct = 0.10,
                                    #min.diff.pct=0.20,
                                    logfc.threshold = 0.20,
                                    return.thresh = 0.01,
                                    only.pos = F)
 markersList <- list()
-
 for(i in 0:4){
-  markersList[[paste0("cluster",i)]] <- markers_loosened[markers_loosened$cluster==i,]
+  markersList[[paste0("cluster_",i)]] <- markers_loosened[markers_loosened$cluster==i,]
 }
 names(markersList)
 lapply(markersList,nrow)
@@ -469,6 +468,7 @@ cluster_wo5[['tfsulm_DE']] <- acts_DE_wo5 %>%
   column_to_rownames('source') %>%
   Seurat::CreateAssayObject(.)
 
+
 # Change assay
 DefaultAssay(object = cluster_wo5) <- "tfsulm_DE"
 
@@ -484,7 +484,7 @@ df <- t(as.matrix(cluster_wo5@assays$tfsulm_DE@data)) %>%
   mutate(cluster = cluster_wo5$merged) %>%
   pivot_longer(cols = -cluster, names_to = "source", values_to = "score") %>%
   group_by(cluster, source) %>%
-  summarise(mean = mean(score, trim = 0.25))
+  summarise(mean = mean(score,trim=0.25))
 
 # Get top tfs with more variable means across clusters
 
@@ -495,7 +495,7 @@ sorted <- df %>%
 sorted$Rank <- 1:nrow(sorted)
 sorted$genes <- toupper(sorted$source)
 
-n_tfs = nrow(sorted)
+n_tfs = 100
 tfs <- df %>%
   group_by(source) %>%
   summarise(std = max(mean)) %>%
@@ -503,11 +503,10 @@ tfs <- df %>%
   head(n_tfs) %>%
   pull(source)
 
-grepl("Hif1a",tfs)
 
 # Subset long data frame to top tfs and transform to wide matrix
 top_acts_mat <- df %>%
-  filter(source %in% tfs) %>%
+  dplyr::filter(source %in% tfs) %>%
   pivot_wider(id_cols = 'cluster', names_from = 'source',
               values_from = 'mean') %>%
   column_to_rownames('cluster') %>%
@@ -565,7 +564,7 @@ int.allCond_myeloid_woCluster5[["int_peaks"]]@fragments[[2]]@path<- paste0("/hom
 
 regionQuery <- "chr7-19695000-19700000" # Apoe
 #regionQuery <- "chr9-46227000-46230466" # Apoa1
-regionQuery <- "chr7-19699000-19700000" # Apoe Zoom
+regionQuery <- "chr7-19696000-19700000" # Apoe Zoom
 
 extend.downstream = 0
 extend.upstream = 0
@@ -624,7 +623,8 @@ covPlot <- Signac::CoveragePlot(
   split.by = 'seurat_clusters',
   #region = "chr7-19700275-19701843",
   region = extendede_query,
-  region.highlight = overlapRanges,
+  #region.highlight = c(overlapRanges,TF),
+  region.highlight = c(overlapRanges),
   annotation = F,
   #features = geneOfInterest,
   peaks = F,
@@ -738,6 +738,32 @@ for(i in list.files(unzip_dir,full.names = T)){
 overlaps <- findOverlaps(TFs_binbdingSites[2:length(TFs_binbdingSites)])
 
 
+TF_binding_site_selected <- TFs_binbdingSites[TFs_binbdingSites$name %in% c("MA0065.3.Pparg::Rxra","MA2338.1.Ppara"),]
+covPlot <- Signac::CoveragePlot(
+  object = int.allCond_myeloid_woCluster5,
+  group.by = 'orig.ident',
+  split.by = 'seurat_clusters',
+  region = extendede_query,
+  region.highlight = c(overlapRanges,TF_binding_site_selected),
+  annotation = F,
+  peaks = F,
+) + scale_fill_manual(values = colorVector)
+
+gene_plot <- AnnotationPlot(
+  object = int.allCond_myeloid_woCluster5,
+  region = extendede_query
+) + theme_classic(base_size = 20)
+
+final <- CombineTracks(
+  plotlist = list(covPlot, gene_plot),
+  heights = c(10, 1),
+  widths = c(10)
+)
+
+svglite::svglite(paste0(pfm_single@name,"_Apoe_region_pparg_ppara.svg"), width = 15, height = 15)
+plot(final)
+dev.off()
+
 # Do footprinting analysis ----
 # library(JASPAR2022)
 # pwm <- getMatrixSet(
@@ -778,7 +804,39 @@ for(i in list.files(unzip_dir,full.names = T)){
   
 }
 
+cluster2_3_only <- subset(int.allCond_myeloid_woCluster5, merged %in% c("KC_2","KC_3"))
+for(i in list.files(unzip_dir,full.names = T)){
+  pfm_file <- i
+  print(pfm_file)
+  pfm <- TFBSTools::readJASPARMatrix(pfm_file, matrixClass = "PFM")
+  TF_name <- names(pfm)
   
+  
+  # add motif information
+  DefaultAssay(cluster2_3_only) <-"int_peaks"
+  cluster2_3_only <- AddMotifs(cluster2_3_only, 
+                                              genome = BSgenome.Mmusculus.UCSC.mm10, 
+                                              pfm = pfm)
+  
+  cluster2_3_only <- Footprint(
+    object = cluster2_3_only,
+    motif.name = TF_name,
+    genome = BSgenome.Mmusculus.UCSC.mm10,
+    in.peaks = F
+  )
+  
+  
+  
+  
+  Idents(cluster2_3_only) <- cluster2_3_only$orig.ident
+  
+  plottestFootprint <- PlotFootprint(cluster2_3_only, 
+                                     features = TF_name)
+  svglite::svglite(paste0(TF_name,"_tfFootprint_KC_2_3_only.svg"))
+  plot(plottestFootprint)
+  dev.off()
+  
+}
 
 PlotFootprint(int.allCond_myeloid_woCluster5, 
               features = c("Arnt"))
